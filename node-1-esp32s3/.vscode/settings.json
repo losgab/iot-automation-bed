@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "gpio.h": "c",
+        "servo.h": "c",
+        "timers.h": "c",
+        "led_strip.h": "c",
+        "led_strip_rmt.h": "c"
+    }
+}
