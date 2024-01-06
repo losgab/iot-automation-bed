@@ -23,7 +23,7 @@ extern const uint8_t palette[6][3];
  *
  * @return void
  */
-void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, uint8_t colour[]);
+void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, const uint8_t colour[]);
 
 /* ---EXAMPLE THREE CONFIGURATIONS---
 

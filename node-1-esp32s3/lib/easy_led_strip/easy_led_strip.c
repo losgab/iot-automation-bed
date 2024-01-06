@@ -9,7 +9,7 @@ const uint8_t palette[6][3] = {
     {255, 0, 255},
 };
 
-void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, uint8_t colour[])
+void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, const uint8_t colour[])
 {
     for (uint8_t a = 0; a < num_leds; a++)
     {
