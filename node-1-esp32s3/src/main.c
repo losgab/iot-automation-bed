@@ -26,7 +26,8 @@
 #include "easy_led_strip.h"
 #define LED_PIN GPIO_NUM_42
 #define NUM_LEDS 2
-led_strip_handle_t strip;
+led_strip_handle_t strip1;
+led_strip_handle_t strip2;
 led_strip_config_t strip_config = {
     .strip_gpio_num = LED_PIN,
     .max_leds = NUM_LEDS,
@@ -53,8 +54,11 @@ button_t button_0, button_1, button_2;
 
 void app_main()
 {
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &strip));
-    led_strip_clear(strip);
+    // Initialise LED Strips
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &strip1));
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &strip2));
+    led_strip_clear(strip1);
+    led_strip_clear(strip2);
     
     button_0 = create_button(BUTTON_0, true);
     button_1 = create_button(BUTTON_1, true);
@@ -67,11 +71,21 @@ void app_main()
         update_button(button_1);
         update_button(button_2);
         if (was_pushed(button_0))
-            led_strip_set_colour(strip, NUM_LEDS, palette[RED]);
+        {
+            led_strip_set_colour(strip1, NUM_LEDS, palette[RED]);
+            led_strip_set_colour(strip2, NUM_LEDS, palette[GREEN]);
+
+        }
         if (was_pushed(button_1))
-            led_strip_set_colour(strip, NUM_LEDS, palette[GREEN]);
+        {
+            led_strip_set_colour(strip1, NUM_LEDS, palette[BLUE]);
+            led_strip_set_colour(strip2, NUM_LEDS, palette[YELLOW]);
+        }
         if (was_pushed(button_2))
-            led_strip_set_colour(strip, NUM_LEDS, palette[BLUE]);
+        {
+            led_strip_set_colour(strip1, NUM_LEDS, palette[AQUA]);
+            led_strip_set_colour(strip2, NUM_LEDS, palette[MAGENTA]);
+        }
         SYS_DELAY(100);
         
         // Sweep servo from 0 to 180 degrees
