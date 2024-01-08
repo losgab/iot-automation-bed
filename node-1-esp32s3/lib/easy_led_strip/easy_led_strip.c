@@ -18,3 +18,9 @@ void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, const uint
     }
     led_strip_refresh(strip);
 }
+
+void led_strip_set_pixel_colour(led_strip_handle_t strip, uint8_t pixel, const uint8_t colour[])
+{
+    led_strip_set_pixel(strip, pixel, colour[0], colour[1], colour[2]);
+    led_strip_refresh(strip);
+}

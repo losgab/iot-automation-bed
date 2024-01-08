@@ -4,7 +4,7 @@
 #include <freertos/timers.h>
 // #include <driver/uart.h>
 // #include <driver/i2c.h>
-// #include <driver/gpio.h>
+#include <driver/gpio.h>
 
 // #include "servo.h"
 
@@ -24,12 +24,19 @@
 // LED Strip Configuration
 #include <led_strip.h>
 #include "easy_led_strip.h"
-#define LED_PIN GPIO_NUM_42
+#define LED_PIN_1 GPIO_NUM_41
+#define LED_PIN_2 GPIO_NUM_42
 #define NUM_LEDS 2
 led_strip_handle_t strip1;
 led_strip_handle_t strip2;
-led_strip_config_t strip_config = {
-    .strip_gpio_num = LED_PIN,
+led_strip_config_t strip_config1 = {
+    .strip_gpio_num = LED_PIN_1,
+    .max_leds = NUM_LEDS,
+    .led_pixel_format = LED_PIXEL_FORMAT_GRB,
+    .led_model = LED_MODEL_WS2812,
+};
+led_strip_config_t strip_config2 = {
+    .strip_gpio_num = LED_PIN_2,
     .max_leds = NUM_LEDS,
     .led_pixel_format = LED_PIXEL_FORMAT_GRB,
     .led_model = LED_MODEL_WS2812,
@@ -55,8 +62,8 @@ button_t button_0, button_1, button_2;
 void app_main()
 {
     // Initialise LED Strips
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &strip1));
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &strip2));
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config1, &rmt_config, &strip1));
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config2, &rmt_config, &strip2));
     led_strip_clear(strip1);
     led_strip_clear(strip2);
     
@@ -72,8 +79,12 @@ void app_main()
         update_button(button_2);
         if (was_pushed(button_0))
         {
-            led_strip_set_colour(strip1, NUM_LEDS, palette[RED]);
-            led_strip_set_colour(strip2, NUM_LEDS, palette[GREEN]);
+            led_strip_set_pixel_colour(strip1, 0, palette[RED]);
+            led_strip_set_pixel_colour(strip1, 1, palette[GREEN]);
+            led_strip_set_pixel_colour(strip2, 0, palette[BLUE]);
+            led_strip_set_pixel_colour(strip2, 1, palette[MAGENTA]);
+            // led_strip_set_colour(strip1, NUM_LEDS, palette[RED]);
+            // led_strip_set_colour(strip2, NUM_LEDS, palette[GREEN]);
 
         }
         if (was_pushed(button_1))

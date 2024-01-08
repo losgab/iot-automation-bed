@@ -25,6 +25,16 @@ extern const uint8_t palette[6][3];
  */
 void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, const uint8_t colour[]);
 
+/**
+ * @brief Wrapper for simplifying setting colour of a single LED
+ * 
+ * @param strip LED strip handle
+ * @param pixel Pixel number
+ * @param colour Colour of the LEDs from enumeration
+ * 
+ * @return void
+*/
+void led_strip_set_pixel_colour(led_strip_handle_t strip, uint8_t pixel, const uint8_t colour[]);
 /* ---EXAMPLE THREE CONFIGURATIONS---
 
 led_strip_handle_t strip;
