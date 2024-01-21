@@ -85,13 +85,15 @@ i2c_config_t i2c0_config = {
 
 // SSD1306 Display Setup
 #define SSD1306_HW_ADDR 0x3C
+#define SSD1306_CMD_BITS 8
+#define SSD1306_PARAM_BITS 8
 esp_lcd_panel_io_handle_t io_handle = NULL;
 esp_lcd_panel_io_i2c_config_t io_config = {
     .dev_addr = SSD1306_HW_ADDR,
     .control_phase_bytes = 1, // refer to LCD spec
     .dc_bit_offset = 6,       // refer to LCD spec
-    .lcd_cmd_bits = 8,
-    .lcd_param_bits = 8,
+    .lcd_cmd_bits = SSD1306_CMD_BITS,
+    .lcd_param_bits = SSD1306_PARAM_BITS,
 };
 esp_lcd_panel_handle_t panel_handle = NULL;
 esp_lcd_panel_dev_config_t panel_config = {
