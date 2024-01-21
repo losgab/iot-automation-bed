@@ -63,9 +63,9 @@ led_strip_rmt_config_t rmt_config = {
 button_t button1, button2, button3, button4;
 
 // I2C Configuration
-#define I2C_1_MASTER_SCL GPIO_NUM_13
+#define I2C_1_MASTER_SCL GPIO_NUM_13 // I2C 0 (Right Side)
 #define I2C_1_MASTER_SDA GPIO_NUM_14
-#define I2C_2_MASTER_SCL GPIO_NUM_9
+#define I2C_2_MASTER_SCL GPIO_NUM_9 // I2C 1 (Left Side)
 #define I2C_2_MASTER_SDA GPIO_NUM_10
 i2c_config_t i2c0_config = {
     .mode = I2C_MODE_MASTER,
@@ -87,21 +87,21 @@ i2c_config_t i2c0_config = {
 #define SSD1306_HW_ADDR 0x3C
 #define SSD1306_CMD_BITS 8
 #define SSD1306_PARAM_BITS 8
+// LCD Setup
 esp_lcd_panel_io_handle_t io_handle = NULL;
 esp_lcd_panel_io_i2c_config_t io_config = {
     .dev_addr = SSD1306_HW_ADDR,
-    .control_phase_bytes = 1, // refer to LCD spec
-    .dc_bit_offset = 6,       // refer to LCD spec
+    .control_phase_bytes = 1, // From SSD1306 datasheet
+    .dc_bit_offset = 6,       // From SSD1306 datasheet
     .lcd_cmd_bits = SSD1306_CMD_BITS,
     .lcd_param_bits = SSD1306_PARAM_BITS,
 };
+// Display Setup
 esp_lcd_panel_handle_t panel_handle = NULL;
 esp_lcd_panel_dev_config_t panel_config = {
     .bits_per_pixel = 1,
     .reset_gpio_num = -1,
 };
-ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_HOST, &io_config, &io_handle));
-ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));
 
 void app_main()
 {
@@ -122,6 +122,10 @@ void app_main()
     ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
     // ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_1, &i2c1_config));
     // ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_1, I2C_MODE_MASTER, 0, 0, 0));
+
+    // Initialise SSD1306 LHS Display
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_NUM_0, &io_config, &io_handle)); // Attaches LCD panel configuration to I2C for LHS
+    ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle)); // Creates new SSD1306 panel to use
 
     while (1)
     {
