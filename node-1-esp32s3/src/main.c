@@ -3,12 +3,14 @@
 #include <freertos/queue.h>
 #include <freertos/timers.h>
 // #include <driver/uart.h>
-// #include <driver/i2c.h>
+#include <driver/i2c.h>
 #include <driver/gpio.h>
-
-// #include "servo.h"
+#include <hal/lcd_types.h>
+#include "esp_lcd_types.h"
+#include "esp_lcd_panel_io.h"
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
+// #include "servo.h"
 
 #define SERVO_1_GPIO GPIO_NUM_6
 #define SERVO_1_PWM_CHANNEL LEDC_CHANNEL_0
@@ -24,20 +26,21 @@
 // LED Strip Configuration
 #include <led_strip.h>
 #include "easy_led_strip.h"
-#define LED_PIN_1 GPIO_NUM_41
-#define LED_PIN_2 GPIO_NUM_42
-#define NUM_LEDS 2
+#define STRIP_1_PIN GPIO_NUM_41
+#define STRIP_1_NUM_LEDS 1
+#define STRIP_2_PIN GPIO_NUM_42
+#define STRIP_2_NUM_LEDS 2
 led_strip_handle_t strip1;
 led_strip_handle_t strip2;
 led_strip_config_t strip_config1 = {
-    .strip_gpio_num = LED_PIN_1,
-    .max_leds = NUM_LEDS,
+    .strip_gpio_num = STRIP_1_PIN,
+    .max_leds = STRIP_1_NUM_LEDS,
     .led_pixel_format = LED_PIXEL_FORMAT_GRB,
     .led_model = LED_MODEL_WS2812,
 };
 led_strip_config_t strip_config2 = {
-    .strip_gpio_num = LED_PIN_2,
-    .max_leds = NUM_LEDS,
+    .strip_gpio_num = STRIP_2_PIN,
+    .max_leds = STRIP_2_NUM_LEDS,
     .led_pixel_format = LED_PIXEL_FORMAT_GRB,
     .led_model = LED_MODEL_WS2812,
 };
@@ -51,13 +54,52 @@ led_strip_rmt_config_t rmt_config = {
 #endif
 };
 
-// Button Setup
+// Dev Board Button Setup
 #include "Button.h"
-#define BUTTON_0 GPIO_NUM_38
-#define BUTTON_1 GPIO_NUM_39
-#define BUTTON_2 GPIO_NUM_40
-button_t button_0, button_1, button_2;
+#define BUTTON_1 GPIO_NUM_36
+#define BUTTON_2 GPIO_NUM_35
+#define BUTTON_3 GPIO_NUM_34
+#define BUTTON_4 GPIO_NUM_33
+button_t button1, button2, button3, button4;
 
+// I2C Configuration
+#define I2C_1_MASTER_SCL GPIO_NUM_13
+#define I2C_1_MASTER_SDA GPIO_NUM_14
+#define I2C_2_MASTER_SCL GPIO_NUM_9
+#define I2C_2_MASTER_SDA GPIO_NUM_10
+i2c_config_t i2c0_config = {
+    .mode = I2C_MODE_MASTER,
+    .sda_io_num = I2C_1_MASTER_SDA,
+    .scl_io_num = I2C_1_MASTER_SCL,
+    .sda_pullup_en = GPIO_PULLUP_ENABLE,
+    .scl_pullup_en = GPIO_PULLUP_ENABLE,
+    .master.clk_speed = I2C_SCLK_SRC_FLAG_FOR_NOMAL};
+// i2c_config_t i2c1_config = {
+//     .mode = I2C_MODE_MASTER,
+//     .sda_io_num = I2C_2_MASTER_SDA,
+//     .scl_io_num = I2C_2_MASTER_SCL,
+//     .sda_pullup_en = GPIO_PULLUP_ENABLE,
+//     .scl_pullup_en = GPIO_PULLUP_ENABLE,
+//     .master.clk_speed = I2C_SCLK_SRC_FLAG_FOR_NOMAL
+// };
+
+// SSD1306 Display Setup
+#define SSD1306_HW_ADDR 0x3C
+esp_lcd_panel_io_handle_t io_handle = NULL;
+esp_lcd_panel_io_i2c_config_t io_config = {
+    .dev_addr = SSD1306_HW_ADDR,
+    .control_phase_bytes = 1, // refer to LCD spec
+    .dc_bit_offset = 6,       // refer to LCD spec
+    .lcd_cmd_bits = 8,
+    .lcd_param_bits = 8,
+};
+esp_lcd_panel_handle_t panel_handle = NULL;
+esp_lcd_panel_dev_config_t panel_config = {
+    .bits_per_pixel = 1,
+    .reset_gpio_num = -1,
+};
+ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_HOST, &io_config, &io_handle));
+ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));
 
 void app_main()
 {
@@ -66,39 +108,27 @@ void app_main()
     ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config2, &rmt_config, &strip2));
     led_strip_clear(strip1);
     led_strip_clear(strip2);
-    
-    button_0 = create_button(BUTTON_0, true);
-    button_1 = create_button(BUTTON_1, true);
-    button_2 = create_button(BUTTON_2, true);
 
-    // servo_init(&servo_1);
+    // Initialise Buttons
+    button1 = create_button(BUTTON_1, true);
+    button2 = create_button(BUTTON_2, true);
+    button3 = create_button(BUTTON_3, true);
+    button4 = create_button(BUTTON_4, true);
+
+    // Initialise I2C Channel 0 & 1
+    ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &i2c0_config));
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
+    // ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_1, &i2c1_config));
+    // ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_1, I2C_MODE_MASTER, 0, 0, 0));
+
     while (1)
     {
-        update_button(button_0);
-        update_button(button_1);
-        update_button(button_2);
-        if (was_pushed(button_0))
-        {
-            led_strip_set_pixel_colour(strip1, 0, palette[RED]);
-            led_strip_set_pixel_colour(strip1, 1, palette[GREEN]);
-            led_strip_set_pixel_colour(strip2, 0, palette[BLUE]);
-            led_strip_set_pixel_colour(strip2, 1, palette[MAGENTA]);
-            // led_strip_set_colour(strip1, NUM_LEDS, palette[RED]);
-            // led_strip_set_colour(strip2, NUM_LEDS, palette[GREEN]);
-
-        }
-        if (was_pushed(button_1))
-        {
-            led_strip_set_colour(strip1, NUM_LEDS, palette[BLUE]);
-            led_strip_set_colour(strip2, NUM_LEDS, palette[YELLOW]);
-        }
-        if (was_pushed(button_2))
-        {
-            led_strip_set_colour(strip1, NUM_LEDS, palette[AQUA]);
-            led_strip_set_colour(strip2, NUM_LEDS, palette[MAGENTA]);
-        }
+        update_button(button1);
+        update_button(button2);
+        update_button(button3);
+        update_button(button4);
         SYS_DELAY(100);
-        
+
         // Sweep servo from 0 to 180 degrees
         // for (int angle = 0; angle <= 180; angle++)
         // {
