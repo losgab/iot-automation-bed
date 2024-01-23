@@ -5,9 +5,14 @@
 // #include <driver/uart.h>
 #include <driver/i2c.h>
 #include <driver/gpio.h>
-#include <hal/lcd_types.h>
+
+#include "esp_err.h"
+#include "esp_log.h"
+
 #include "esp_lcd_types.h"
 #include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_vendor.h"
+#include <lvgl.h>
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
 // #include "servo.h"
@@ -125,7 +130,10 @@ void app_main()
 
     // Initialise SSD1306 LHS Display
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_NUM_0, &io_config, &io_handle)); // Attaches LCD panel configuration to I2C for LHS
-    ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle)); // Creates new SSD1306 panel to use
+    ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));                    // Creates new SSD1306 panel to use
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
 
     while (1)
     {

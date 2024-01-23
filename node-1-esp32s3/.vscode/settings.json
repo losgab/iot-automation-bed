@@ -5,6 +5,9 @@
         "timers.h": "c",
         "led_strip.h": "c",
         "led_strip_rmt.h": "c",
-        "lcd_types.h": "c"
+        "lcd_types.h": "c",
+        "esp_lcd_panel_io.h": "c",
+        "esp_lcd_types.h": "c",
+        "esp_assert.h": "c"
     }
 }
