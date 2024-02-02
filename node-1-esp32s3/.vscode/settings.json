@@ -8,6 +8,7 @@
         "lcd_types.h": "c",
         "esp_lcd_panel_io.h": "c",
         "esp_lcd_types.h": "c",
-        "esp_assert.h": "c"
+        "esp_assert.h": "c",
+        "font8x8_basic.h": "c"
     }
 }

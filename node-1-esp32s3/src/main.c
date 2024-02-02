@@ -9,24 +9,11 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "esp_lcd_types.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_vendor.h"
-#include <lvgl.h>
+#include "Button.h"
+#include "communication.h"
+#include "esp-ssd1306.h"
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
-// #include "servo.h"
-
-#define SERVO_1_GPIO GPIO_NUM_6
-#define SERVO_1_PWM_CHANNEL LEDC_CHANNEL_0
-
-// servo_t servo_1 = {
-//     .gpio_num = SERVO_1_GPIO,
-//     .speed_mode = LEDC_LOW_SPEED_MODE,
-//     .channel = SERVO_1_PWM_CHANNEL,
-//     .intr_type = LEDC_INTR_DISABLE,
-//     .duty = 0,
-//     .hpoint = 0};
 
 // LED Strip Configuration
 #include <led_strip.h>
@@ -72,41 +59,10 @@ button_t button1, button2, button3, button4;
 #define I2C_1_MASTER_SDA GPIO_NUM_14
 #define I2C_2_MASTER_SCL GPIO_NUM_9 // I2C 1 (Left Side)
 #define I2C_2_MASTER_SDA GPIO_NUM_10
-i2c_config_t i2c0_config = {
-    .mode = I2C_MODE_MASTER,
-    .sda_io_num = I2C_1_MASTER_SDA,
-    .scl_io_num = I2C_1_MASTER_SCL,
-    .sda_pullup_en = GPIO_PULLUP_ENABLE,
-    .scl_pullup_en = GPIO_PULLUP_ENABLE,
-    .master.clk_speed = I2C_SCLK_SRC_FLAG_FOR_NOMAL};
-// i2c_config_t i2c1_config = {
-//     .mode = I2C_MODE_MASTER,
-//     .sda_io_num = I2C_2_MASTER_SDA,
-//     .scl_io_num = I2C_2_MASTER_SCL,
-//     .sda_pullup_en = GPIO_PULLUP_ENABLE,
-//     .scl_pullup_en = GPIO_PULLUP_ENABLE,
-//     .master.clk_speed = I2C_SCLK_SRC_FLAG_FOR_NOMAL
-// };
 
 // SSD1306 Display Setup
-#define SSD1306_HW_ADDR 0x3C
 #define SSD1306_CMD_BITS 8
 #define SSD1306_PARAM_BITS 8
-// LCD Setup
-esp_lcd_panel_io_handle_t io_handle = NULL;
-esp_lcd_panel_io_i2c_config_t io_config = {
-    .dev_addr = SSD1306_HW_ADDR,
-    .control_phase_bytes = 1, // From SSD1306 datasheet
-    .dc_bit_offset = 6,       // From SSD1306 datasheet
-    .lcd_cmd_bits = SSD1306_CMD_BITS,
-    .lcd_param_bits = SSD1306_PARAM_BITS,
-};
-// Display Setup
-esp_lcd_panel_handle_t panel_handle = NULL;
-esp_lcd_panel_dev_config_t panel_config = {
-    .bits_per_pixel = 1,
-    .reset_gpio_num = -1,
-};
 
 void app_main()
 {
@@ -122,18 +78,10 @@ void app_main()
     button3 = create_button(BUTTON_3, true);
     button4 = create_button(BUTTON_4, true);
 
-    // Initialise I2C Channel 0 & 1
-    ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &i2c0_config));
-    ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
-    // ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_1, &i2c1_config));
-    // ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_1, I2C_MODE_MASTER, 0, 0, 0));
+    i2c_init(I2C_MODE_MASTER, I2C_NUM_0, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
 
-    // Initialise SSD1306 LHS Display
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_NUM_0, &io_config, &io_handle)); // Attaches LCD panel configuration to I2C for LHS
-    ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));                    // Creates new SSD1306 panel to use
-    ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
+    ssd1306_init();
+    xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
 
     while (1)
     {

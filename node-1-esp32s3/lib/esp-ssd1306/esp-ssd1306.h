@@ -13,9 +13,12 @@
 #pragma once
 
 #include "font8x8_basic.h"
+#include "driver/i2c.h"
 
 #ifndef MAIN_SSD1366_H_
 #define MAIN_SSD1366_H_
+
+#define SSD1306_TAG "SSD1306"
 
 // Following definitions are bollowed from 
 // http://robotcantalk.blogspot.com/2015/03/interfacing-arduino-with-ssd1306-driven.html
@@ -58,5 +61,21 @@
 
 // Charge Pump (pg.62)
 #define OLED_CMD_SET_CHARGE_PUMP        0x8D    // follow with 0x14
+
+/**
+ * @brief Initialize SSD1306 display
+ * 
+ * @return void
+*/
+void ssd1306_init();
+
+/**
+ * @brief Display text on SSD1306 display
+ * 
+ * @param pvParameters from TaskCreate
+ * 
+ * @return void
+*/
+void task_ssd1306_display_text(void *pvParameters);
 
 #endif /* MAIN_SSD1366_H_ */

@@ -10,7 +10,7 @@ enum colour // Colours
     YELLOW,  // 255, 255, 0
     AQUA,    // 0, 255, 255
     MAGENTA, // 255, 0, 255
-};
+} colour_t;
 
 extern const uint8_t palette[6][3];
 
