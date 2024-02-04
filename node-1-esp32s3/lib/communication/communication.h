@@ -1,10 +1,9 @@
 /**
- * MIni Library for simplifying setting up common communication protocols 
+ * Mini Library for simplifying setting up common communication protocols 
  * for the ESP32 in ESP-IDF
  * 
  * Supports
  * - I2C
- * - UART
  * 
  * @author Gabriel Thien (https://github.com/losgab)
 */
