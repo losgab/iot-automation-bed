@@ -9,16 +9,20 @@
  * - Provide support for both I2C and SPI controlled OLED displays 
  * 
  * @author Gabriel Thien (https://github.com/losgab)
+ * Inspiration from yanbe (https://github.com/yanbe/ssd1306-esp-idf-i2c/tree/master)
 */
 #pragma once
 
-#include "font8x8_basic.h"
 #include "driver/i2c.h"
+#include "esp_log.h"
+#include "string.h"
 
 #ifndef MAIN_SSD1366_H_
 #define MAIN_SSD1366_H_
 
 #define SSD1306_TAG "SSD1306"
+
+#define MAX_PAGES 8
 
 // Following definitions are bollowed from 
 // http://robotcantalk.blogspot.com/2015/03/interfacing-arduino-with-ssd1306-driven.html
@@ -77,5 +81,13 @@ void ssd1306_init();
  * @return void
 */
 void task_ssd1306_display_text(void *pvParameters);
+
+void task_ssd1306_display_pattern(void *ignore);
+
+void task_ssd1306_display_clear(void *ignore);
+
+void task_ssd1306_contrast(void *ignore);
+
+void task_ssd1306_scroll(void *ignore);
 
 #endif /* MAIN_SSD1366_H_ */

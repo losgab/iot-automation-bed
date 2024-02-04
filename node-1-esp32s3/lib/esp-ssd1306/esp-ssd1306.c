@@ -1,3 +1,4 @@
+#include "font8x8_basic.h"
 #include "esp-ssd1306.h"
 
 void ssd1306_init()
@@ -77,13 +78,115 @@ void task_ssd1306_display_text(void *pvParameters)
 			i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
 
 			i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-			i2c_master_write(cmd, font8x8_basic[(uint8_t)text[i]], 8, true);
+			i2c_master_write(cmd, (uint8_t *)(font8x8_basic[(uint8_t)text[i]]), 8, true);
 
 			i2c_master_stop(cmd);
 			i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
 			i2c_cmd_link_delete(cmd);
 		}
 	}
+
+	vTaskDelete(NULL);
+}
+
+void task_ssd1306_display_pattern(void *ignore) {
+	i2c_cmd_handle_t cmd;
+
+	for (uint8_t i = 0; i < 8; i++) {
+		cmd = i2c_cmd_link_create();
+		i2c_master_start(cmd);
+		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_SINGLE, true);
+		i2c_master_write_byte(cmd, 0xB0 | i, true);
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
+		for (uint8_t j = 0; j < 128; j++) {
+			i2c_master_write_byte(cmd, 0xFF >> (j % 8), true);
+		}
+		i2c_master_stop(cmd);
+		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+		i2c_cmd_link_delete(cmd);
+	}
+
+	vTaskDelete(NULL);
+}
+
+void task_ssd1306_display_clear(void *ignore) {
+	i2c_cmd_handle_t cmd;
+
+	uint8_t zero[128] = {0};
+	for (uint8_t i = 0; i < MAX_PAGES; i++) {
+		cmd = i2c_cmd_link_create();
+		i2c_master_start(cmd);
+		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_SINGLE, true);
+		i2c_master_write_byte(cmd, 0xB0 | i, true);
+
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
+		i2c_master_write(cmd, zero, 128, true);
+		i2c_master_stop(cmd);
+		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+		i2c_cmd_link_delete(cmd);
+	}
+
+	vTaskDelete(NULL);
+}
+
+
+void task_ssd1306_contrast(void *ignore) {
+	i2c_cmd_handle_t cmd;
+
+	uint8_t contrast = 0;
+	uint8_t direction = 1;
+	while (true) {
+		cmd = i2c_cmd_link_create();
+		i2c_master_start(cmd);
+		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+		i2c_master_write_byte(cmd, OLED_CMD_SET_CONTRAST, true);
+		i2c_master_write_byte(cmd, contrast, true);
+		i2c_master_stop(cmd);
+		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+		i2c_cmd_link_delete(cmd);
+		vTaskDelay(1/portTICK_PERIOD_MS);
+
+		contrast += direction;
+		if (contrast == 0xFF) { direction = -1; }
+		if (contrast == 0x0) { direction = 1; }
+	}
+	vTaskDelete(NULL);
+}
+
+void task_ssd1306_scroll(void *ignore) {
+	esp_err_t espRc;
+
+	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+	i2c_master_start(cmd);
+
+	i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+
+	i2c_master_write_byte(cmd, 0x29, true); // vertical and horizontal scroll (p29)
+	i2c_master_write_byte(cmd, 0x00, true);
+	i2c_master_write_byte(cmd, 0x00, true);
+	i2c_master_write_byte(cmd, 0x07, true);
+	i2c_master_write_byte(cmd, 0x01, true);
+	i2c_master_write_byte(cmd, 0x3F, true);
+
+	i2c_master_write_byte(cmd, 0xA3, true); // set vertical scroll area (p30)
+	i2c_master_write_byte(cmd, 0x20, true);
+	i2c_master_write_byte(cmd, 0x40, true);
+
+	i2c_master_write_byte(cmd, 0x2F, true); // activate scroll (p29)
+
+	i2c_master_stop(cmd);
+	espRc = i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+	if (espRc == ESP_OK) {
+		ESP_LOGI(SSD1306_TAG, "Scroll command succeeded");
+	} else {
+		ESP_LOGE(SSD1306_TAG, "Scroll command failed. code: 0x%.2X", espRc);
+	}
+
+	i2c_cmd_link_delete(cmd);
 
 	vTaskDelete(NULL);
 }

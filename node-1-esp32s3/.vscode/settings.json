@@ -9,6 +9,10 @@
         "esp_lcd_panel_io.h": "c",
         "esp_lcd_types.h": "c",
         "esp_assert.h": "c",
-        "font8x8_basic.h": "c"
+        "font8x8_basic.h": "c",
+        "button.h": "c",
+        "communication.h": "c",
+        "string.h": "c",
+        "i2c.h": "c"
     }
 }

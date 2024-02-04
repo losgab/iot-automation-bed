@@ -7,6 +7,7 @@
 
     Written by Gabriel Thien 2023
 */
+#pragma once
 #include <driver/gpio.h>
 
 typedef struct Button

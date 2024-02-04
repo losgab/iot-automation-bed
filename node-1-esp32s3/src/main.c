@@ -9,9 +9,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "Button.h"
 #include "communication.h"
-#include "esp-ssd1306.h"
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
 
@@ -55,12 +53,13 @@ led_strip_rmt_config_t rmt_config = {
 button_t button1, button2, button3, button4;
 
 // I2C Configuration
-#define I2C_1_MASTER_SCL GPIO_NUM_13 // I2C 0 (Right Side)
+#define I2C_1_MASTER_SCL GPIO_NUM_13 // I2C 0 (Left Side)
 #define I2C_1_MASTER_SDA GPIO_NUM_14
-#define I2C_2_MASTER_SCL GPIO_NUM_9 // I2C 1 (Left Side)
+#define I2C_2_MASTER_SCL GPIO_NUM_9 // I2C 1 (Right Side)
 #define I2C_2_MASTER_SDA GPIO_NUM_10
 
 // SSD1306 Display Setup
+#include "esp-ssd1306.h"
 #define SSD1306_CMD_BITS 8
 #define SSD1306_PARAM_BITS 8
 
@@ -81,22 +80,15 @@ void app_main()
     i2c_init(I2C_MODE_MASTER, I2C_NUM_0, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
 
     ssd1306_init();
+    // xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
     xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
 
-    while (1)
-    {
-        update_button(button1);
-        update_button(button2);
-        update_button(button3);
-        update_button(button4);
-        SYS_DELAY(100);
-
-        // Sweep servo from 0 to 180 degrees
-        // for (int angle = 0; angle <= 180; angle++)
-        // {
-        //     servo_set(SERVO_1_PWM_CHANNEL, angle);
-        //     SYS_DELAY(10);
-        // }
-        // SYS_DELAY(200);
-    }
+    // while (1)
+    // {
+    //     update_button(button1);
+    //     update_button(button2);
+    //     update_button(button3);
+    //     update_button(button4);
+    //     SYS_DELAY(100);
+    // }
 }
