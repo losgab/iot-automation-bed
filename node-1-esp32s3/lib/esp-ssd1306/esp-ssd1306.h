@@ -30,7 +30,7 @@
 // SLA (0x3C) + WRITE_MODE (0x00) =  0x78 (0b01111000)
 #define OLED_I2C_ADDRESS   0x3C
 
-// Control byte
+// Control byte (Co bit + D/C# bit + 6 zero bits) 
 #define OLED_CONTROL_BYTE_CMD_SINGLE    0x80
 #define OLED_CONTROL_BYTE_CMD_STREAM    0x00
 #define OLED_CONTROL_BYTE_DATA_STREAM   0x40
