@@ -39,7 +39,7 @@
 /**
  * @brief LED Strip RMT Device Object
  */
-typedef struct
+typedef struct gled_strip_rmt_device
 {
     gled_strip_rmt_encoder *strip_encoder;  // RMT Strip Encoder Handle
     uint16_t num_leds;                      // Max number of LEDS attached on LED strip
@@ -114,7 +114,7 @@ typedef struct
  *
  * @return esp_err_t ESP_OK on success
  */
-static esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device *rmt_device, gpio_num_t pin, uint16_t num_leds);
+esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device *rmt_device, gpio_num_t pin, uint16_t num_leds);
 
 /**
  * @brief Initialise RMT interface
@@ -123,7 +123,7 @@ static esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device *rmt_device, gp
  * 
  * @return esp_err_t ESP_OK on success
 */
-static esp_err_t gled_strip_new_rmt_interface(gled_strip_rmt_interface *interface);
+esp_err_t gled_strip_new_rmt_interface(gled_strip_rmt_interface *interface);
 
 /**
  * @brief Set pixel colour of the LED strip. Does not refresh.
@@ -137,7 +137,7 @@ static esp_err_t gled_strip_new_rmt_interface(gled_strip_rmt_interface *interfac
  *
  * @return esp_err_t ESP_OK on success
  */
-static esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device *rmt_device, uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
+esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device *rmt_device, uint16_t index, uint8_t red, uint8_t green, uint8_t blue);
 
 /**
  * @brief Transmit no loop TX configuration to LED strip to refresh LED strip
@@ -147,7 +147,7 @@ static esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device *rmt_device, uin
  *
  * @return esp_err_t ESP_OK on success
  */
-static esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device *rmt_device);
+esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device *rmt_device);
 
 /**
  * @brief Clear all pixels to no colour & refreshes LED strip
@@ -157,7 +157,7 @@ static esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device *rmt_device);
  *
  * @return esp_err_t ESP_OK on success
  */
-static esp_err_t gled_strip_rmt_clear(gled_strip_rmt_device *rmt_device);
+esp_err_t gled_strip_rmt_clear(gled_strip_rmt_device *rmt_device);
 
 /**
  * @brief Delete RMT device
@@ -166,4 +166,4 @@ static esp_err_t gled_strip_rmt_clear(gled_strip_rmt_device *rmt_device);
  *
  * @return esp_err_t ESP_OK on success
  */
-static esp_err_t gled_strip_rmt_del(gled_strip_rmt_device *rmt_device);
+esp_err_t gled_strip_rmt_del(gled_strip_rmt_device *rmt_device);

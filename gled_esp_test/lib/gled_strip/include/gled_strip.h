@@ -15,6 +15,9 @@
 #include "gled_strip_colours.h"
 #include <driver/gpio.h>
 
+#include <esp_err.h>
+#include <esp_check.h>
+
 #define GLED_STRIP_TAG "GLED_STRIP"
 
 /**
