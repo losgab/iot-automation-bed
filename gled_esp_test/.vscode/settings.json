@@ -2,6 +2,7 @@
     "files.associations": {
         "esp_err.h": "c",
         "freertos.h": "c",
-        "timers.h": "c"
+        "timers.h": "c",
+        "gpio.h": "c"
     }
 }

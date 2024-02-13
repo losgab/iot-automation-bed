@@ -1,14 +1,16 @@
 #include "gled_strip_rmt.h"
+#include <string.h>
 
-static esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device *rmt_device, gpio_num_t pin, uint16_t num_leds)
+esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device_t *rmt_device, gpio_num_t pin, uint16_t num_leds)
 {
     ESP_RETURN_ON_FALSE(rmt_device == NULL, ESP_ERR_INVALID_ARG, RMT_DEVICE_TAG, "Strip Not NULL");
 
     // Allocate memory for RMT device
-    gled_strip_rmt_device *new_device = malloc(sizeof(gled_strip_rmt_device));
+    gled_strip_rmt_device_t *new_device = malloc(sizeof(gled_strip_rmt_device_t));
     ESP_RETURN_ON_FALSE(new_device == NULL, ESP_ERR_NO_MEM, RMT_DEVICE_TAG, "No Memory left for RMT device");
 
     // Create new strip RMT encoder
+    new_device->strip_encoder = NULL;
     ESP_RETURN_ON_ERROR(gled_strip_new_rmt_encoder(new_device->strip_encoder), RMT_DEVICE_TAG, "Create LED strip encoder failed");
 
     new_device->num_leds = num_leds;
@@ -36,15 +38,7 @@ static esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device *rmt_device, gp
     return ESP_OK;
 }
 
-static esp_err_t gled_strip_new_rmt_interface(gled_strip_rmt_interface *interface)
-{
-    interface->set_pixel = gled_strip_rmt_set_pixel;
-    interface->refresh = gled_strip_rmt_refresh;
-    interface->clear = gled_strip_rmt_clear;
-    interface->del = gled_strip_rmt_del;
-}
-
-static esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device *rmt_device, uint16_t index, uint8_t red, uint8_t green, uint8_t blue)
+esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device_t *rmt_device, uint16_t index, uint8_t red, uint8_t green, uint8_t blue)
 {
     ESP_RETURN_ON_FALSE(index < rmt_device->num_leds, ESP_ERR_INVALID_ARG, RMT_DEVICE_TAG, "Given Index out of initialised number of LEDs");
     uint32_t start = index * rmt_device->bytes_per_pixel;
@@ -56,14 +50,14 @@ static esp_err_t gled_strip_rmt_set_pixel(gled_strip_rmt_device *rmt_device, uin
     return ESP_OK;
 }
 
-static esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device *rmt_device)
+static esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device_t *rmt_device)
 {
     rmt_transmit_config_t tx_conf = {
         .loop_count = 0,
     };
 
     ESP_RETURN_ON_ERROR(rmt_enable(rmt_device->rmt_config.rmt_chan), RMT_DEVICE_TAG, "enable RMT channel failed");
-    ESP_RETURN_ON_ERROR(rmt_transmit(rmt_device->rmt_config.rmt_chan, rmt_device->strip_encoder, rmt_device->pixel_buffer,
+    ESP_RETURN_ON_ERROR(rmt_transmit(rmt_device->rmt_config.rmt_chan, &rmt_device->strip_encoder->base, rmt_device->pixel_buffer,
                                      rmt_device->num_leds * rmt_device->bytes_per_pixel, &tx_conf),
                         RMT_DEVICE_TAG, "transmit pixels by RMT failed");
     ESP_RETURN_ON_ERROR(rmt_tx_wait_all_done(rmt_device->rmt_config.rmt_chan, -1), RMT_DEVICE_TAG, "flush RMT channel failed");
@@ -71,17 +65,26 @@ static esp_err_t gled_strip_rmt_refresh(gled_strip_rmt_device *rmt_device)
     return ESP_OK;
 }
 
-static esp_err_t gled_strip_rmt_clear(gled_strip_rmt_device *rmt_device)
+static esp_err_t gled_strip_rmt_clear(gled_strip_rmt_device_t *rmt_device)
 {
     // Write zero to turn off all leds
     memset(rmt_device->pixel_buffer, 0, rmt_device->num_leds * rmt_device->bytes_per_pixel);
     return gled_strip_rmt_refresh(rmt_device);
 }
 
-static esp_err_t gled_strip_rmt_del(gled_strip_rmt_device *rmt_device)
+esp_err_t gled_strip_rmt_del(gled_strip_rmt_device_t *rmt_device)
 {
     ESP_RETURN_ON_ERROR(gled_strip_rmt_encoder_del(rmt_device->strip_encoder), RMT_DEVICE_TAG, "delete strip encoder failed");
     ESP_RETURN_ON_ERROR(rmt_del_channel(rmt_device->rmt_config.rmt_chan), RMT_DEVICE_TAG, "delete RMT channel failed");
     free(rmt_device);
+    return ESP_OK;
+}
+
+esp_err_t gled_strip_new_rmt_interface(gled_strip_rmt_interface *interface)
+{
+    interface->set_pixel = gled_strip_rmt_set_pixel;
+    interface->refresh = gled_strip_rmt_refresh;
+    interface->clear = gled_strip_rmt_clear;
+    interface->del = gled_strip_rmt_del;
     return ESP_OK;
 }

@@ -7,6 +7,8 @@ esp_err_t gled_strip_new(gled_strip_t *strip, gpio_num_t pin, uint16_t num_leds)
 
     strip->pin = pin;
     strip->format = LED_PIXEL_FORMAT_GRB;
+    strip->rmt_device = NULL;
+    strip->interface = NULL;
 
     ESP_RETURN_ON_ERROR(gled_strip_new_rmt_device(strip->rmt_device, pin, num_leds), GLED_STRIP_TAG, "Create RMT device failed");
     ESP_RETURN_ON_ERROR(gled_strip_new_rmt_interface(strip->interface), GLED_STRIP_TAG, "Link RMT interface failed");

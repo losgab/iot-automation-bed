@@ -9,8 +9,6 @@
  */
 #pragma once
 
-#define MAX_NUM_LEDS 50
-
 #include "gled_strip_rmt.h"
 #include "gled_strip_colours.h"
 #include <driver/gpio.h>
@@ -39,10 +37,9 @@ typedef struct gled_strip
 {
     gpio_num_t pin;                      // GPIO Pin used by the LED Strip
     pixel_format_t format;               // Pixel format of the LED Strip
-    gled_strip_rmt_device *rmt_device;   // RMT Device Handle
+    gled_strip_rmt_device_t *rmt_device; // RMT Device Handle
     gled_strip_rmt_interface *interface; // Interface
 } gled_strip_t;
-
 
 /////////////////////////////////////////////////////////////
 //////////////// USERLAND API FUNCTIONS /////////////////////
