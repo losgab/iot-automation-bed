@@ -16,7 +16,7 @@ static size_t gled_strip_rmt_encoder_encode(rmt_encoder_t *encoder, rmt_channel_
         {
             strip_encoder->state = 1; // switch to next state when current encoding session finished
         }
-        if (session_state & RMT_ENCODING_MEM_FULL)
+        else if (session_state & RMT_ENCODING_MEM_FULL)
         {
             state |= RMT_ENCODING_MEM_FULL;
             ESP_LOGI(RMT_ENCODER_TAG, "No free space for encoding artifacts (case 0)");
@@ -30,7 +30,7 @@ static size_t gled_strip_rmt_encoder_encode(rmt_encoder_t *encoder, rmt_channel_
             strip_encoder->state = 0; // back to the initial encoding session
             state |= RMT_ENCODING_COMPLETE;
         }
-        if (session_state & RMT_ENCODING_MEM_FULL)
+        else if (session_state & RMT_ENCODING_MEM_FULL)
         {
             state |= RMT_ENCODING_MEM_FULL;
             ESP_LOGI(RMT_ENCODER_TAG, "No free space for encoding artifacts (case 1)");
@@ -44,22 +44,24 @@ static size_t gled_strip_rmt_encoder_encode(rmt_encoder_t *encoder, rmt_channel_
     return ESP_OK;
 }
 
-static esp_err_t gled_strip_rmt_encoder_reset(gled_strip_rmt_encoder_t *strip_encoder)
+esp_err_t gled_strip_rmt_encoder_reset(rmt_encoder_t *encoder)
 {
+    gled_strip_rmt_encoder_t *strip_encoder = __containerof(encoder, gled_strip_rmt_encoder_t, base);
     rmt_encoder_reset(strip_encoder->bytes_encoder);
     rmt_encoder_reset(strip_encoder->copy_encoder);
     strip_encoder->state = 0;
     return ESP_OK;
 }
 
-esp_err_t gled_strip_rmt_encoder_del(gled_strip_rmt_encoder_t *strip_encoder)
+esp_err_t gled_strip_rmt_encoder_del(rmt_encoder_t *encoder)
 {
+    gled_strip_rmt_encoder_t *strip_encoder = __containerof(encoder, gled_strip_rmt_encoder_t, base);
     rmt_del_encoder(strip_encoder->bytes_encoder);
     rmt_del_encoder(strip_encoder->copy_encoder);
     free(strip_encoder);
     return ESP_OK;
 }
-esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t *strip_encoder)
+esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t **strip_encoder)
 {
     // ESP_RETURN_ON_FALSE(ret_device == NULL, ESP_ERR_INVALID_ARG, RMT_ENCODER_TAG, "Encoder Not NULL");
 
@@ -98,6 +100,6 @@ esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t *strip_encoder)
         .duration1 = reset_ticks,
     };
 
-    strip_encoder = new_encoder;
+    *strip_encoder = new_encoder;
     return ESP_OK;
 }

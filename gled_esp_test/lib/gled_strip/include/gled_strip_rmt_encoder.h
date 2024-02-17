@@ -32,7 +32,7 @@ typedef struct gled_strip_rmt_encoder
  *
  * @return ESP_OK on success, otherwise an error code
  */
-esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t *strip_encoder);
+esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t **strip_encoder);
 
 /**
  * @brief Delete RMT Encoder & Free resources
@@ -41,4 +41,4 @@ esp_err_t gled_strip_new_rmt_encoder(gled_strip_rmt_encoder_t *strip_encoder);
  *
  * @return esp_err_t ESP_OK on success
  */
-esp_err_t gled_strip_rmt_encoder_del(gled_strip_rmt_encoder_t *strip_encoder);
+esp_err_t gled_strip_rmt_encoder_del(rmt_encoder_t *encoder);

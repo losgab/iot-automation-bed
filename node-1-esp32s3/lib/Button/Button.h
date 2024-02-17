@@ -9,48 +9,46 @@
 */
 #pragma once
 #include <driver/gpio.h>
+#include <esp_err.h>
 
 typedef struct Button
 {
     uint8_t pin;
     uint8_t last_state;
     uint8_t pushed;
-    // uint8_t pressed;
-} Button;
 
-typedef Button* button_t;
+    // uint8_t pressed;
+
+    /**
+     * @brief Reads & updates the state of the button
+     *
+     * @return void
+     */
+    void (*update_button)(struct Button *button);
+
+    /**
+     * @brief Returns whether button was pushed since last clock cycle
+     *
+     * @return true if button was pushed, false if not.
+     */
+    bool (*was_pushed)(struct Button *button);
+} button_t;
 
 /**
  * @brief Initialises a button attached to the specified pin
- * 
+ *
  * @param pin GPIO pin that button is attached to
  * @param is_input_pullup 1 -> INPUT_PULLUP, 0 for external
- * 
- * @return Pointer to struct malloc
-*/
-button_t create_button(uint8_t pin, uint8_t is_input_pullup);
+ *
+ * @return ESP_OK if successful, ESP_ERR_INVALID_ARG if invalid pin
+ */
+esp_err_t create_button(uint8_t pin, uint8_t is_input_pullup, button_t *ret_button);
 
-/**
- * @brief Reads and updates the state of the button
- * 
- * @param button struct Button *
-*/
-void update_button(button_t button);
-
-/**
- * @brief Returns whether button was pushed
- * 
- * @param button struct Button *
- * 
- * @return 1 if pushed, 0 if not. Works on pulses
-*/
-uint8_t was_pushed(button_t button);
-
-/**
- * @brief Returns whether button is being held down
- * 
- * @param button struct Button *
- * 
- * @return 1 if held down, 0 if not.
-*/
-uint8_t is_pressed(button_t button);
+// /**
+//  * @brief Returns whether button is being held down
+//  *
+//  * @param button struct Button *
+//  *
+//  * @return 1 if held down, 0 if not.
+//  */
+// uint8_t is_pressed(button_t button);

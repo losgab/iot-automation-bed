@@ -14,35 +14,10 @@
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
 
 // LED Strip Configuration
-#include <led_strip.h>
-#include "easy_led_strip.h"
-#define STRIP_1_PIN GPIO_NUM_41
-#define STRIP_1_NUM_LEDS 1
-#define STRIP_2_PIN GPIO_NUM_42
-#define STRIP_2_NUM_LEDS 2
+#include "gled_strip.h"
+#define STRIP_1_PIN GPIO_NUM_42
+#define STRIP_1_NUM_LEDS 2
 led_strip_handle_t strip1;
-led_strip_handle_t strip2;
-led_strip_config_t strip_config1 = {
-    .strip_gpio_num = STRIP_1_PIN,
-    .max_leds = STRIP_1_NUM_LEDS,
-    .led_pixel_format = LED_PIXEL_FORMAT_GRB,
-    .led_model = LED_MODEL_WS2812,
-};
-led_strip_config_t strip_config2 = {
-    .strip_gpio_num = STRIP_2_PIN,
-    .max_leds = STRIP_2_NUM_LEDS,
-    .led_pixel_format = LED_PIXEL_FORMAT_GRB,
-    .led_model = LED_MODEL_WS2812,
-};
-led_strip_rmt_config_t rmt_config = {
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
-    .rmt_channel = 0,
-#else
-    .clk_src = RMT_CLK_SRC_DEFAULT,    // different clock source can lead to different power consumption
-    .resolution_hz = 10 * 1000 * 1000, // 10MHz
-    .flags.with_dma = false,           // whether to enable the DMA feature
-#endif
-};
 
 // Dev Board Button Setup
 #include "Button.h"
@@ -66,16 +41,14 @@ button_t button1, button2, button3, button4;
 void app_main()
 {
     // Initialise LED Strips
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config1, &rmt_config, &strip1));
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config2, &rmt_config, &strip2));
-    led_strip_clear(strip1);
-    led_strip_clear(strip2);
+    ESP_ERROR_CHECK(create_led_strip_device(STRIP_1_PIN, STRIP_1_NUM_LEDS, &strip1));
+    led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, RED);
 
     // Initialise Buttons
-    button1 = create_button(BUTTON_1, true);
-    button2 = create_button(BUTTON_2, true);
-    button3 = create_button(BUTTON_3, true);
-    button4 = create_button(BUTTON_4, true);
+    create_button(BUTTON_1, true, &button1);
+    create_button(BUTTON_2, true, &button2);
+    create_button(BUTTON_3, true, &button3);
+    create_button(BUTTON_4, true, &button4);
 
     i2c_init(I2C_MODE_MASTER, I2C_NUM_0, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
 
@@ -83,12 +56,29 @@ void app_main()
     // xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
     xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
 
-    // while (1)
-    // {
-    //     update_button(button1);
-    //     update_button(button2);
-    //     update_button(button3);
-    //     update_button(button4);
-    //     SYS_DELAY(100);
-    // }
+    while (1)
+    {
+        button1.update_button(&button1);
+        button2.update_button(&button2);
+        button3.update_button(&button3);
+        button4.update_button(&button4);
+        SYS_DELAY(100);
+
+        if (button1.was_pushed(&button1))
+        {
+            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, RED);
+        }
+        else if (button2.was_pushed(&button2))
+        {
+            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, GREEN);
+        }
+        else if (button3.was_pushed(&button3))
+        {
+            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, YELLOW);
+        }
+        else if (button4.was_pushed(&button4))
+        {
+            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, AQUA);
+        }
+    }
 }

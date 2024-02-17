@@ -11,7 +11,7 @@ esp_err_t gled_strip_new_rmt_device(gled_strip_rmt_device_t *rmt_device, gpio_nu
 
     // Create new strip RMT encoder
     new_device->strip_encoder = NULL;
-    ESP_RETURN_ON_ERROR(gled_strip_new_rmt_encoder(new_device->strip_encoder), RMT_DEVICE_TAG, "Create LED strip encoder failed");
+    ESP_RETURN_ON_ERROR(gled_strip_new_rmt_encoder(&new_device->strip_encoder), RMT_DEVICE_TAG, "Create LED strip encoder failed");
 
     new_device->num_leds = num_leds;
     new_device->bytes_per_pixel = 3;
