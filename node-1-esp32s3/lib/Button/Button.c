@@ -1,28 +1,28 @@
 #include "Button.h"
 
-button_t create_button(uint8_t pin, uint8_t is_input_pullup)
-{
-    button_t new_button = malloc(sizeof(Button));
-
-    gpio_set_direction(pin, GPIO_MODE_INPUT);
-    if (is_input_pullup)
-        gpio_pullup_en(pin);
-
-    new_button->pin = pin;
-    new_button->last_state = 0;
-    new_button->pushed = 0;
-
-    return new_button;
-}
-
-void update_button(button_t button)
+void update_button(button_t *button)
 {
     uint8_t reading = !gpio_get_level(button->pin);
     button->pushed = (!button->last_state && reading);
     button->last_state = reading;
 }
 
-uint8_t was_pushed(button_t button)
+bool was_pushed(button_t *button)
 {
     return button->pushed;
+}
+
+esp_err_t create_button(uint8_t pin, uint8_t is_input_pullup, button_t *ret_button)
+{
+    gpio_set_direction(pin, GPIO_MODE_INPUT);
+    if (is_input_pullup)
+        gpio_pullup_en(pin);
+
+    ret_button->pin = pin;
+    ret_button->last_state = 0;
+    ret_button->pushed = 0;
+
+    ret_button->update_button = update_button;
+    ret_button->was_pushed = was_pushed;
+    return ESP_OK;
 }
