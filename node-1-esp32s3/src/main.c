@@ -35,8 +35,8 @@ button_t button1, button2, button3, button4;
 
 // SSD1306 Display Setup
 #include "esp-ssd1306.h"
-#define SSD1306_CMD_BITS 8
-#define SSD1306_PARAM_BITS 8
+#define SSD1306_I2C_PORT I2C_NUM_0
+ssd1306_t display;
 
 void app_main()
 {
@@ -51,10 +51,11 @@ void app_main()
     create_button(BUTTON_4, true, &button4);
 
     i2c_init(I2C_MODE_MASTER, I2C_NUM_0, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
-
-    ssd1306_init();
+    
+    gesp_ssd1306_init(SSD1306_I2C_PORT, &display);
+    // ssd1306_init();
     // xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
-    xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
+    // xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
 
     while (1)
     {
@@ -70,15 +71,17 @@ void app_main()
         }
         else if (button2.was_pushed(&button2))
         {
-            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, GREEN);
+            char *text = "Test line";
+            display.print_text_on_line(&display, text, LINE_3);
         }
         else if (button3.was_pushed(&button3))
         {
-            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, YELLOW);
+            display.clear_line(&display, LINE_3);
         }
         else if (button4.was_pushed(&button4))
         {
-            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, AQUA);
+            display.clear_display(&display);
+            // xTaskCreate(&task_ssd1306_display_clear, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
         }
     }
 }
