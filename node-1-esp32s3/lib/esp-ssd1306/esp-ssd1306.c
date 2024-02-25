@@ -220,7 +220,7 @@ void ssd1306_clear_line(ssd1306_t *device, line_num_t line)
 	i2c_cmd_link_delete(cmd);
 
 	// Writes the text to the line, clears the rest of the line
-	uint8_t zero[128] = {0};
+	uint8_t zero[64] = {0};
 	for (uint8_t i = 0; i < MAX_CHARACTERS_PER_LINE; i++)
 	{
 		cmd = i2c_cmd_link_create();
@@ -228,7 +228,7 @@ void ssd1306_clear_line(ssd1306_t *device, line_num_t line)
 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
 
 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-		i2c_master_write(cmd, zero, 128, true);
+		i2c_master_write(cmd, zero, 64, true);
 
 		i2c_master_stop(cmd);
 		i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);

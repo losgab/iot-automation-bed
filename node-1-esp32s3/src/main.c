@@ -38,6 +38,9 @@ button_t button1, button2, button3, button4;
 #define SSD1306_I2C_PORT I2C_NUM_0
 ssd1306_t display;
 
+// Servo Setup
+// #include "iot_servo.h"
+
 void app_main()
 {
     // Initialise LED Strips
@@ -57,6 +60,8 @@ void app_main()
     // xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
     // xTaskCreate(&task_ssd1306_display_text, "task_ssd1306_display_text", 4096, NULL, 5, NULL);
 
+    int line = 0;
+
     while (1)
     {
         button1.update_button(&button1);
@@ -67,12 +72,12 @@ void app_main()
 
         if (button1.was_pushed(&button1))
         {
-            led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, RED);
+            char *text = "Test line-------";
+            display.print_text_on_line(&display, text, LINE_3);
+            // led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, RED);
         }
         else if (button2.was_pushed(&button2))
         {
-            char *text = "Test line";
-            display.print_text_on_line(&display, text, LINE_3);
         }
         else if (button3.was_pushed(&button3))
         {
