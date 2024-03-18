@@ -6,6 +6,7 @@
 #pragma once
 
 #include <led_strip.h>
+#include <driver/gpio.h>
 
 #define MAX_COLOURS 6
 #define CHANNELS 3

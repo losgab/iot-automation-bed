@@ -13,6 +13,10 @@
         "button.h": "c",
         "communication.h": "c",
         "string.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "iot_button.h": "c",
+        "esp_err.h": "c",
+        "memory": "c",
+        "random": "c"
     }
 }
