@@ -4,8 +4,8 @@ esp_err_t fdc_reset(i2c_port_t i2c_port_num)
 {
     uint8_t reset[3];
     reset[0] = FDC_REGISTER;
-    reset[1] = 0;
-    reset[2] = 1;
+    reset[1] = 1 << 7;;
+    reset[2] = 0;
 
     uint8_t error = i2c_master_write_to_device(i2c_port_num, FDC_SLAVE_ADDRESS, reset, sizeof(reset), pdMS_TO_TICKS(1000));
     if (error != ESP_OK)

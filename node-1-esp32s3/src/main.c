@@ -115,10 +115,18 @@ void app_main()
     i2c_init(I2C_MODE_MASTER, I2C_NUM_1, I2C_2_MASTER_SDA, I2C_2_MASTER_SCL);
     gesp_ssd1306_init(SSD1306_I2C_PORT, &display);
 
+    // Initialise FDC1004 Level Sensing Calculator
+    level_calc_t level_sensor = init_level_calculator();
+
     uint8_t data[2] = {0};
     while (1) {
         SYS_DELAY(1000);
         read_register(I2C_NUM_1, FDC_DEVICE_ID_REG, data);
         printf("Device ID: %X %X\n", data[0], data[1]);
+        // calculate_level(level_sensor);
+        update_measurements(level_sensor);
+        printf("Ref Value: %f\n", level_sensor->ref_value);
+        printf("Lev Value: %f\n", level_sensor->lev_value);
+        printf("Env Value: %f\n", level_sensor->env_value);
     }
 }
