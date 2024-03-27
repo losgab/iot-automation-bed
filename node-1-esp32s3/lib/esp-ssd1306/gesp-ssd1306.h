@@ -1,14 +1,21 @@
-#pragma once
-/**
- * @file gesp-ssd1306.h
- *
- * Gabriel's OOP Library for the ESP-IDF SSD1306 OLED Display Driver
- *
- * Goals:
- * - Provide a simple line by line ASCII printing interface for the SSD1306 OLED Display Driver
- *   through the I2C and SPI protocols
- * - Provide a FreeRTOS task to handle updating the OLED display
- */
+#ifndef GESP_SSD1306_H
+#define GESP_SSD1306_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    /**
+     * @file gesp-ssd1306.h
+     *
+     * Gabriel's OOP Library for the ESP-IDF SSD1306 OLED Display Driver
+     *
+     * Goals:
+     * - Provide a simple line by line ASCII printing interface for the SSD1306 OLED Display Driver
+     *   through the I2C and SPI protocols
+     * - Provide a FreeRTOS task to handle updating the OLED display
+     */
 
 #include "driver/i2c.h"
 #include "esp_log.h"
@@ -59,20 +66,19 @@
 // Charge Pump (pg.62)
 #define OLED_CMD_SET_CHARGE_PUMP 0x8D // follow with 0x14
 
-typedef enum {
-    LINE_0,
-    LINE_1,
-    LINE_2,
-    LINE_3,
-    LINE_4,
-    LINE_5,
-    LINE_6,
-    LINE_7,
-    MAX_LINES
-} line_num_t;
+    typedef enum
+    {
+        LINE_0,
+        LINE_1,
+        LINE_2,
+        LINE_3,
+        LINE_4,
+        LINE_5,
+        LINE_6,
+        LINE_7,
+        MAX_LINES
+    } line_num_t;
 
-namespace gesp_ssd1306
-{
     class SSD1306
     {
     public:
@@ -83,22 +89,30 @@ namespace gesp_ssd1306
 
         /**
          * @brief Prints string to specified line on display.
-        */
+         */
         esp_err_t print_text_on_line(const char *text, line_num_t line);
 
         /**
          * @brief Clears entire screen.
-        */
-       esp_err_t clear_all();
+         */
+        esp_err_t clear_all();
 
         /**
          * @brief Clears entire screen.
-        */
-       esp_err_t clear_line(line_num_t line);
+         */
+        esp_err_t clear_line(line_num_t line);
 
         /**
          * @brief Destructor
-        */
+         */
         ~SSD1306();
+
+    private:
+        i2c_port_t port;
     };
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif

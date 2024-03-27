@@ -9,12 +9,16 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "communication.h"
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
 
 // LED Strip Configuration
-#include "gled_strip.h"
+extern "C"
+{
+    #include "communication.h"
+    #include "gled_strip.h"
+    #include "esp32_fdc1004_lls.h"
+}
 #define STRIP_1_PIN GPIO_NUM_42
 #define STRIP_1_NUM_LEDS 2
 led_strip_handle_t strip1;
@@ -28,9 +32,11 @@ led_strip_handle_t strip1;
 #define I2C_2_MASTER_SDA GPIO_NUM_10
 
 // SSD1306 Display Setup
-#include "esp-ssd1306.h"
+// #include "esp-ssd1306.h"
 #define SSD1306_I2C_PORT I2C_NUM_0
-ssd1306_t display;
+// ssd1306_t display;
+#include "gesp-ssd1306.h"
+SSD1306 display(SSD1306_I2C_PORT);
 
 // Servo Setup
 // #include "iot_servo.h"
@@ -43,7 +49,6 @@ ssd1306_t display;
 #define BUTTON_4 GPIO_NUM_33
 #define BUTTON_TAG "Button Tag"
 
-#include "esp32_fdc1004_lls.h"
 
 static void b1_ecb(void *arg, void *data)
 {
@@ -58,11 +63,13 @@ static void b2_ecb(void *arg, void *data)
 static void b3_ecb(void *arg, void *data)
 {
     led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, AQUA);
+    display.clear_line(LINE_0);
 }
 
 static void b4_ecb(void *arg, void *data)
 {
     led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, MAGENTA);
+    fdc_reset(I2C_NUM_1);
 }
 
 void button_init()
@@ -99,12 +106,12 @@ void button_init()
     iot_button_register_cb(button4, BUTTON_PRESS_DOWN, b4_ecb, NULL);
 }
 
-void app_main()
+extern "C" void app_main()
 {
     // Initialise LED Strips
     ESP_ERROR_CHECK(create_led_strip_device(STRIP_1_PIN, STRIP_1_NUM_LEDS, &strip1));
     led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, GREEN);
-    SYS_DELAY(1000);
+    SYS_DELAY(100);
     led_strip_clear(strip1);
 
     // Initialise Buttons
@@ -113,20 +120,26 @@ void app_main()
     // I2C Setup
     i2c_init(I2C_MODE_MASTER, I2C_NUM_0, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
     i2c_init(I2C_MODE_MASTER, I2C_NUM_1, I2C_2_MASTER_SDA, I2C_2_MASTER_SCL);
-    gesp_ssd1306_init(SSD1306_I2C_PORT, &display);
+    display.clear_all();
+    display.print_text_on_line("Hello World!", LINE_0);
 
     // Initialise FDC1004 Level Sensing Calculator
-    level_calc_t level_sensor = init_level_calculator();
+    level_calc_t level_sensor = init_level_calculator(I2C_NUM_1);
+    uint8_t level = 0;
+    esp_err_t esp_rc;
 
-    uint8_t data[2] = {0};
-    while (1) {
+    while (1)
+    {
         SYS_DELAY(1000);
-        read_register(I2C_NUM_1, FDC_DEVICE_ID_REG, data);
-        printf("Device ID: %X %X\n", data[0], data[1]);
-        // calculate_level(level_sensor);
-        update_measurements(level_sensor);
-        printf("Ref Value: %f\n", level_sensor->ref_value);
-        printf("Lev Value: %f\n", level_sensor->lev_value);
-        printf("Env Value: %f\n", level_sensor->env_value);
+        esp_rc = update_measurements(level_sensor);
+        if (esp_rc == ESP_OK)
+        {
+            level = calculate_level(level_sensor);
+            // printf("Ref Value: %f\n", level_sensor->ref_value);
+            // printf("Lev Value: %f\n", level_sensor->lev_value);
+            // printf("Env Value: %f\n", level_sensor->env_value);
+            printf("---------------\n");
+            // printf("Level: %d\n", level);
+        }
     }
 }

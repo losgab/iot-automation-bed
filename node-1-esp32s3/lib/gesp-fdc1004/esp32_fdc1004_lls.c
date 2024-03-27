@@ -1,22 +1,35 @@
 #include "esp32_fdc1004_lls.h"
 
-esp_err_t fdc_reset(i2c_port_t i2c_port_num)
+esp_err_t check_fdc1004(i2c_port_t port)
+{
+    uint16_t data;
+    read_register(port, FDC_DEVICE_ID_REG, &data);
+    if (data != 0x1004)
+    {
+        printf("FDC1004 not detected!\n");
+        return ESP_ERR_NOT_FOUND;
+    }
+    return ESP_OK;
+}
+
+esp_err_t fdc_reset(i2c_port_t port)
 {
     uint8_t reset[3];
     reset[0] = FDC_REGISTER;
-    reset[1] = 1 << 7;;
+    reset[1] = 1 << 7;
     reset[2] = 0;
 
-    uint8_t error = i2c_master_write_to_device(i2c_port_num, FDC_SLAVE_ADDRESS, reset, sizeof(reset), pdMS_TO_TICKS(1000));
+    uint8_t error = i2c_master_write_to_device(port, FDC_SLAVE_ADDRESS, reset, sizeof(reset), pdMS_TO_TICKS(1000));
     if (error != ESP_OK)
     {
         printf("Software Reset Failed! %d\n", error);
         return error;
     }
+    printf("FDC1004 Software Reset!\n");
     return ESP_OK;
 }
 
-fdc_channel_t init_channel(i2c_port_t i2c_port_num, uint8_t channel, uint8_t rate)
+fdc_channel_t init_channel(i2c_port_t port, uint8_t channel, uint8_t rate)
 {
     if (!FDC1004_IS_CHANNEL(channel))
         return NULL;
@@ -34,13 +47,13 @@ fdc_channel_t init_channel(i2c_port_t i2c_port_num, uint8_t channel, uint8_t rat
     }
 
     // Assigning fields
-    new_channel->i2c_port_num = i2c_port_num;
+    new_channel->port = port;
     new_channel->channel = channel;
     new_channel->rate = rate;
 
-    new_channel->config_address = config[channel];
-    new_channel->msb_address = msb_addresses[channel];
-    new_channel->lsb_address = lsb_addresses[channel];
+    new_channel->config_address = config[channel - 1];
+    new_channel->msb_address = msb_addresses[channel - 1];
+    new_channel->lsb_address = lsb_addresses[channel - 1];
 
     new_channel->ma = init_moving_average();
 
@@ -80,25 +93,28 @@ esp_err_t validate_channel_obj(fdc_channel_t channel_obj)
     return ESP_OK;
 }
 
-esp_err_t read_register(i2c_port_t i2c_port_num, uint8_t reg_address, uint8_t *ret_data)
+esp_err_t read_register(i2c_port_t i2c_port_num, uint8_t reg_address, uint16_t *ret_data)
 {
     esp_err_t error;
+    uint8_t data[2];
 
     // Specify which register to read with pointer byte
     error = i2c_master_write_to_device(i2c_port_num, FDC_SLAVE_ADDRESS, &reg_address, sizeof(reg_address), pdMS_TO_TICKS(100));
     if (error != ESP_OK)
     {
-        printf("Specify read register failed! %d\n", error);
+        // printf("Specify read register failed! %d\n", error);
         return error;
     }
 
     // Sends read command for reading the current value in the register stored in the pointer register
-    error = i2c_master_read_from_device(i2c_port_num, FDC_SLAVE_ADDRESS, ret_data, 2, pdMS_TO_TICKS(100));
+    error = i2c_master_read_from_device(i2c_port_num, FDC_SLAVE_ADDRESS, data, 2, pdMS_TO_TICKS(100));
     if (error != ESP_OK)
     {
-        printf("Read byte in register failed! %d\n", error);
+        // printf("Read byte in register failed! %d\n", error);
         return error;
     }
+
+    *ret_data = ((uint16_t)(data[0]) << 8) | (uint16_t)data[1];
     return ESP_OK;
 }
 
@@ -113,14 +129,14 @@ esp_err_t configure_single_measurement(fdc_channel_t channel_obj)
 
     // Build 16 bit configuration
     uint16_t configuration = 0;
-    configuration = (uint16_t)(channel_obj->channel) << 13; // CHA
-    configuration |= ((uint16_t)0x04) << 10;                // CHB disable * CAPDAC enable
+    configuration = (uint16_t)(channel_obj->channel - 1) << 13; // CHA
+    configuration |= ((uint16_t)0x4) << 10;                    // CHB disable * CAPDAC enable
     configuration |= (uint16_t)(channel_obj->capdac) << 5;  // Capdac Value
 
     config[0] = channel_obj->config_address;
     config[1] = (uint8_t)(configuration >> 8);
     config[2] = (uint8_t)(configuration);
-    error = i2c_master_write_to_device(channel_obj->i2c_port_num, FDC_SLAVE_ADDRESS, config, sizeof(config), pdMS_TO_TICKS(1000));
+    error = i2c_master_write_to_device(channel_obj->port, FDC_SLAVE_ADDRESS, config, sizeof(config), pdMS_TO_TICKS(1000));
     if (error != ESP_OK)
         printf("Configure measurement failed! %d\n", error);
 
@@ -136,17 +152,17 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
     if (validate_channel_obj(channel_obj))
         return ESP_ERR_INVALID_ARG;
 
-    // Build trigger for register 0x0C
-    uint16_t trigger_config = 0;
-    trigger_config = (uint16_t)(channel_obj->rate) << 10; // Sample Rate
-    trigger_config |= 0 << 8;                             // Disable repeat
-    trigger_config |= (1 << (7 - channel_obj->channel));
+    // Build trigger for 16 bit register 0x0C
+    uint16_t trigger_config = 0x0000;
+    trigger_config |= (uint16_t)(channel_obj->rate) << 10; // Sample Rate
+    trigger_config |= 0x0100;                              // Disable repeat
+    trigger_config |= 1 << (8 - channel_obj->channel);
 
     // Write trigger command
     trigger[0] = FDC_REGISTER;
     trigger[1] = (uint8_t)(trigger_config >> 8);
     trigger[2] = (uint8_t)(trigger_config);
-    error = i2c_master_write_to_device(channel_obj->i2c_port_num, FDC_SLAVE_ADDRESS, trigger, sizeof(trigger), pdMS_TO_TICKS(10));
+    error = i2c_master_write_to_device(channel_obj->port, FDC_SLAVE_ADDRESS, trigger, sizeof(trigger), pdMS_TO_TICKS(10));
     if (error != ESP_OK)
     {
         printf("Trigger failed! %d\n", error);
@@ -157,17 +173,20 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
     vTaskDelay(pdMS_TO_TICKS(50));
 
     // Read value & store
-    // uint8_t raw_msb = read_register(channel_obj->i2c_port_num, channel_obj->msb_address);
-    // uint8_t raw_lsb = read_register(channel_obj->i2c_port_num, channel_obj->lsb_address);
-    uint8_t raw_msb = 0;
-    uint8_t raw_lsb = 0;
+    uint16_t raw_msb = 0;
+    uint16_t raw_lsb = 0;
+    read_register(channel_obj->port, channel_obj->msb_address, &raw_msb);
+    read_register(channel_obj->port, channel_obj->lsb_address, &raw_lsb);
     channel_obj->raw_msb = raw_msb;
     channel_obj->raw_lsb = raw_lsb;
 
-    int16_t measurement_value = ((int16_t)raw_msb << 8) | (int16_t)raw_lsb;
-
+    // int32_t measurement_value = ((int16_t)raw_msb << 8) | (int16_t)raw_lsb;
+    int32_t raw_measurement_value = ((int32_t)raw_msb << 8) | ((int32_t)raw_lsb >> 8);
+    printf("Raw value: %ld\n", raw_measurement_value);
+    printf("Capacitance: %ld\n", raw_measurement_value >> 19);
+ 
     // Calculate capacitance
-    int32_t capacitance = (int32_t)ATTOFARADS_UPPER_WORD * (int32_t)measurement_value; // in attofarads
+    int32_t capacitance = (int32_t)ATTOFARADS_UPPER_WORD * (int32_t)raw_measurement_value; // in attofarads
     capacitance /= 1000;                                                               // in femtofarads
     capacitance += (int32_t)FEMTOFARADS_CAPDAC * (int32_t)(channel_obj->capdac);
 
@@ -188,6 +207,10 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
 
 esp_err_t update_measurements(level_calc_t level_calc)
 {
+    esp_err_t esp_rc = check_fdc1004(level_calc->port);
+    if (esp_rc != ESP_OK)
+        return esp_rc;
+
     // Update all readings on all channels
     update_measurement(level_calc->ref_channel);
     update_measurement(level_calc->lev_channel);
@@ -216,7 +239,16 @@ esp_err_t update_capdac(fdc_channel_t channel_obj)
     return ESP_OK;
 }
 
-level_calc_t init_level_calculator()
+void timer_callback(TimerHandle_t xTimer)
+{
+    level_calc_t level_calc = (level_calc_t)pvTimerGetTimerID(xTimer);
+
+    calibrate(level_calc);
+
+    // printf("Interrupt! Calibration triggered!\n");
+}
+
+level_calc_t init_level_calculator(i2c_port_t port)
 {
     level_calc_t new_calc = malloc(sizeof(level_calculator));
 
@@ -235,9 +267,10 @@ level_calc_t init_level_calculator()
     new_calc->lev_value = 0;
     new_calc->env_value = 0;
 
-    new_calc->ref_channel = init_channel(I2C_NUM_0, REF_CHANNEL, FDC1004_100HZ);
-    new_calc->lev_channel = init_channel(I2C_NUM_0, LEV_CHANNEL, FDC1004_100HZ);
-    new_calc->env_channel = init_channel(I2C_NUM_0, ENV_CHANNEL, FDC1004_100HZ);
+    new_calc->port = port;
+    new_calc->ref_channel = init_channel(port, REF_CHANNEL, FDC1004_100HZ);
+    new_calc->lev_channel = init_channel(port, LEV_CHANNEL, FDC1004_100HZ);
+    new_calc->env_channel = init_channel(port, ENV_CHANNEL, FDC1004_100HZ);
 
     configure_single_measurement(new_calc->ref_channel);
     configure_single_measurement(new_calc->lev_channel);
@@ -246,22 +279,13 @@ level_calc_t init_level_calculator()
     return new_calc;
 }
 
-void timer_callback(TimerHandle_t xTimer)
-{
-    level_calc_t level_calc = (level_calc_t)pvTimerGetTimerID(xTimer);
-
-    calibrate(level_calc);
-
-    // printf("Interrupt! Calibration triggered!\n");
-}
-
 esp_err_t calibrate(level_calc_t level)
 {
     level->current_delta = level->ref_value - level->env_value;
     // level->current_delta = level->ref_value - REF_BASELINE;
     if (level->current_delta == 0)
     {
-        printf("Calibration Failed!\n");
+        printf("Calibration Failed! DELTA 0\n");
     }
 
     // Calculates the predicted trend
@@ -269,19 +293,31 @@ esp_err_t calibrate(level_calc_t level)
     forecast_m = level->current_delta / 5;
     forecast_b = LEV_BASELINE - forecast_m * 5;
 
-    printf("(2) Forecast m: %.2f\n", forecast_m);
-    printf("(2) Forecast b: %.2f\n", forecast_b);
+    // printf("(2) Forecast m: %.2f\n", forecast_m);
+    // printf("(2) Forecast b: %.2f\n", forecast_b);
 
-    level->correction_gain = round_2dp(1 / forecast_m);
-    level->correction_offset = round_2dp(-1 * level->correction_gain * forecast_b);
+    level->correction_gain = 1 / forecast_m;
+    level->correction_offset = -1 * level->correction_gain * forecast_b;
 
     return ESP_OK;
 }
 
+uint8_t round_nearest_multiple(float value, uint8_t multiple)
+{
+    return (int)((value + (multiple / 2)) / multiple) * multiple;
+}
+
 uint8_t calculate_level(level_calc_t level)
 {
-    if (level->ref_value < REF_BASELINE - 0.2)
-        fdc_reset(level->ref_channel->i2c_port_num);
+    esp_err_t esp_rc = check_fdc1004(level->port);
+    if (esp_rc != ESP_OK)
+        return esp_rc;
+
+    // if (level->ref_value < 0 || level->lev_value < 0 || level->env_value < 0)
+    //     printf("ERROR: NEGATIVE VAL!\n");
+
+    // if (level->ref_value < REF_BASELINE - 0.2)
+    //     fdc_reset(level->ref_channel->port);
 
     if (level->lev_value < LEV_BASELINE)
         return 0;
@@ -292,14 +328,4 @@ uint8_t calculate_level(level_calc_t level)
     printf("Linear Corrected: %f\n", linear_corrected);
 
     return round_nearest_multiple(linear_corrected, 5);
-}
-
-float round_2dp(float value)
-{
-    return (float)((int)(value * 100 + .5) / 100);
-}
-
-uint8_t round_nearest_multiple(float value, uint8_t multiple)
-{
-    return (int)((value + (multiple / 2)) / multiple) * multiple;
 }
