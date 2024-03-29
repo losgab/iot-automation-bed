@@ -123,6 +123,11 @@ extern "C" void app_main()
     display.clear_all();
     display.print_text_on_line("Hello World!", LINE_0);
 
+    // Add programs to menu to choose from
+    // Add LED changing program
+    // Add Servo Control program
+    // Add FDC1004 Level Sensing Calculator program
+
     // Initialise FDC1004 Level Sensing Calculator
     level_calc_t level_sensor = init_level_calculator(I2C_NUM_1);
     uint8_t level = 0;
