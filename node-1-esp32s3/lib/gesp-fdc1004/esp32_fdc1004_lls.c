@@ -183,24 +183,24 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
     // int32_t measurement_value = ((int16_t)raw_msb << 8) | (int16_t)raw_lsb;
     int32_t raw_measurement_value = ((int32_t)raw_msb << 8) | ((int32_t)raw_lsb >> 8);
     printf("Raw value: %ld\n", raw_measurement_value);
-    printf("Capacitance: %ld\n", raw_measurement_value >> 19);
+    printf("Capacitance: %ld pF\n", raw_measurement_value >> 19);
  
     // Calculate capacitance
-    int32_t capacitance = (int32_t)ATTOFARADS_UPPER_WORD * (int32_t)raw_measurement_value; // in attofarads
-    capacitance /= 1000;                                                               // in femtofarads
-    capacitance += (int32_t)FEMTOFARADS_CAPDAC * (int32_t)(channel_obj->capdac);
+    // int32_t capacitance = (int32_t)ATTOFARADS_UPPER_WORD * (int32_t)raw_measurement_value; // in attofarads
+    // capacitance /= 1000;                                                               // in femtofarads
+    // capacitance += (int32_t)FEMTOFARADS_CAPDAC * (int32_t)(channel_obj->capdac);
 
     // Update capdac
     // update_capdac(channel_obj);
 
     // Store value
-    channel_obj->raw_value = ((float)capacitance / 1000);
+    channel_obj->raw_value = (float)((raw_measurement_value >> 16) / 1000);
 
     // Update moving average
-    moving_average_enqueue(channel_obj->ma, (float)capacitance);
+    // moving_average_enqueue(channel_obj->ma, (float)capacitance);
 
     // Update value
-    channel_obj->value = get_moving_average(channel_obj->ma) / 1000;
+    // channel_obj->value = get_moving_average(channel_obj->ma) / 1000;
 
     return ESP_OK;
 }
