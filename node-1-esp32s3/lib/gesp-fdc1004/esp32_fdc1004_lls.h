@@ -9,20 +9,23 @@
 
 #include <driver/i2c.h>
 #include "freertos/timers.h"
+#include "esp_log.h"
 
 #include "MovingAverage.h"
 
+#define FDC_TAG "FDC1004"
+
 #define FDC_SLAVE_ADDRESS 0b1010000
 
-#define FDC1004_100HZ (0x01)
-#define FDC1004_200HZ (0x02)
-#define FDC1004_400HZ (0x03)
+#define FDC1004_100HZ (0x1)
+#define FDC1004_200HZ (0x2)
+#define FDC1004_400HZ (0x3)
 #define FDC1004_IS_RATE(x) (FDC1004_100HZ <= x && x <= FDC1004_400HZ)
 
 #define FDC1004_CAPDAC_MAX (0x1F)
 
-#define FDC1004_CHANNEL_MIN (0x01)
-#define FDC1004_CHANNEL_MAX (0x04)
+#define FDC1004_CHANNEL_MIN (0x0)
+#define FDC1004_CHANNEL_MAX (0x3)
 #define FDC1004_IS_CHANNEL(x) (FDC1004_CHANNEL_MIN <= x && x <= FDC1004_CHANNEL_MAX)
 
 #define FDC1004_IS_CONFIG_ADDRESS(a) (0x08 <= a && a <= 0x0B)
@@ -30,8 +33,8 @@
 #define FDC1004_IS_MSB_ADDRESS(a) (a % 2 == 0 && 0x00 <= a && a <= 0x06)
 #define FDC1004_IS_LSB_ADDRESS(a) (a % 2 == 1 && 0x01 <= a && a <= 0x07)
 
-#define FDC_DEVICE_ID_REG (0xFF)
 #define FDC_REGISTER (0x0C)
+#define FDC_DEVICE_ID_REG (0xFF)
 
 #define ATTOFARADS_UPPER_WORD (457) // number of attofarads for each 8th most lsb (lsb of the upper 16 bit half-word)
 #define FEMTOFARADS_CAPDAC (3028)   // number of femtofarads for each lsb of the capdac
@@ -39,9 +42,14 @@
 #define FDC1004_UPPER_BOUND ((int16_t)0x4000)
 #define FDC1004_LOWER_BOUND (-1 * FDC1004_UPPER_BOUND)
 
+#define GAIN_CAL 0.1
+#define OFFSET_CAL -0.5
+
 static const uint8_t config[] = {0x08, 0x09, 0x0A, 0x0B};
 static const uint8_t msb_addresses[] = {0x00, 0x02, 0x04, 0x06};
 static const uint8_t lsb_addresses[] = {0x01, 0x03, 0x05, 0x07};
+static const uint8_t offset_registers[] = {0x0D, 0x0E, 0x0F, 0x10};
+static const uint8_t gain_registers[] = {0x11, 0x12, 0x13, 0x14};
 
 // Calibration Parameters
 #define REF_BASELINE 1.80 // can be replaced with environment later
@@ -71,6 +79,8 @@ typedef struct fdc1004_channel
     uint8_t config_address;
     uint8_t msb_address;
     uint8_t lsb_address;
+    uint8_t offset_register;
+    uint8_t gain_register;
 
     // Utility
     moving_average_t ma;
@@ -123,15 +133,6 @@ esp_err_t fdc_reset(i2c_port_t port);
  * @return ESP_OK if all good.
  */
 esp_err_t del_channel(fdc_channel_t channel_obj);
-
-/**
- * @brief Validates the fields in the channel struct
- *
- * @param channel_obj Pointer to channel struct
- *
- * @return ESP_OK if good, ESP_ERR_INVLD_ARG if there is mismatch data
- */
-esp_err_t validate_channel_obj(fdc_channel_t channel_obj);
 
 /**
  * @brief Uses I2C interface to read data at a particular address

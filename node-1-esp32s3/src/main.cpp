@@ -143,7 +143,6 @@ extern "C" void app_main()
             // printf("Ref Value: %f\n", level_sensor->ref_value);
             // printf("Lev Value: %f\n", level_sensor->lev_value);
             // printf("Env Value: %f\n", level_sensor->env_value);
-            printf("---------------\n");
             // printf("Level: %d\n", level);
         }
     }
