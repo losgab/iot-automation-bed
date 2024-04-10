@@ -42,7 +42,7 @@
 #define FDC1004_UPPER_BOUND ((int16_t)0x4000)
 #define FDC1004_LOWER_BOUND (-1 * FDC1004_UPPER_BOUND)
 
-#define GAIN_CAL 0.1
+#define GAIN_CAL 0.2
 #define OFFSET_CAL -0.5
 
 static const uint8_t config[] = {0x08, 0x09, 0x0A, 0x0B};

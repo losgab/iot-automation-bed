@@ -61,6 +61,7 @@ public:
 
 private:
     SSD1306 display;
+    uint8_t curr_programs;
     uint8_t program_count;
     program_t programs[MAX_NUM_PROGRAMS]{};
 };

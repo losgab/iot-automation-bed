@@ -1,5 +1,6 @@
 #include "gesp-menu.h"
 #include "string.h"
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -53,6 +54,7 @@ extern "C"
     {
         return ESP_OK;
     }
+
 #ifdef __cplusplus
 }
 #endif
