@@ -17,7 +17,7 @@ extern "C"
     esp_err_t Menu::add_program(const char *program_name)
     {
         size_t length = strlen(program_name);
-        if (length > MAX_PROGRAM_NAME_LEN)
+        if (length + 1 > MAX_PROGRAM_NAME_LEN)
         {
             ESP_LOGE(MENU_TAG, "Program name too long");
             return ESP_ERR_INVALID_ARG;
