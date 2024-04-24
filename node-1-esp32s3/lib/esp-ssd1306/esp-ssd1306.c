@@ -1,6 +1,25 @@
 #include "font8x8_basic.h"
 #include "esp-ssd1306.h"
 
+void ssd1306_main(void *pvParameters)
+{
+	while (1)
+	{
+		// Loop forever
+	}
+
+	vTaskDelete(NULL);
+}
+
+// For standalone use, call this function to initialize the task.
+TaskHandle_t ssd1306_task_init()
+{
+	TaskHandle_t handle;
+	// 0 is lowest priority
+	xTaskCreate(ssd1306_main, "ssd1306_main", 4096, NULL, 1, &handle);
+	return handle;
+}
+
 void ssd1306_init()
 {
 	esp_err_t espRc;

@@ -2,7 +2,8 @@
 #define MENU_UI_H
 
 #include <driver/gpio.h>
-#include "gesp-ssd1306.h"
+// #include "gesp-ssd1306.h"
+#include "esp-ssd1306.h"
 #include "esp_err.h"
 #include "esp_log.h"
 
@@ -15,6 +16,7 @@
 typedef struct program
 {
     uint8_t program_id;
+    TaskHandle_t program_task;
     char program_name[MAX_PROGRAM_NAME_LEN];
     void (*program_start)(void);
     void (*program_end)(void);
@@ -27,7 +29,7 @@ public:
     /**
      * @brief Initialises a new MenuUI instance. Loads existing tasks from flash memory. Starts SSD1306 device.
      */
-    Menu(SSD1306 &display);
+    Menu();
 
     /**
      * @brief Adds a program to the menu UI.
@@ -63,6 +65,7 @@ private:
     SSD1306 display;
     uint8_t curr_programs;
     uint8_t program_count;
+    BaseType_t suspended_tasks[MAX_NUM_PROGRAMS]{};
     program_t programs[MAX_NUM_PROGRAMS]{};
 };
 #endif

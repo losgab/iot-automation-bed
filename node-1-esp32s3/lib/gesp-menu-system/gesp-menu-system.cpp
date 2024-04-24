@@ -1,4 +1,4 @@
-#include "gesp-menu.h"
+#include "gesp-menu-system.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -7,11 +7,35 @@ extern "C"
 {
 #endif
 
+    void menu_main(struct ssd1306 *display)
+    {
+        // Main Menu Loop
+        while (1)
+        {
+            // Display Menu
+            display.print_text_on_line(display, "1. Program 1", LINE_1);
+            display.print_text_on_line(display, "2. Program 2", LINE_2);
+        }
+
+        vTaskDelete();
+    }
+
+    TaskHandle_t menu_init()
+    {
+        TaskHandle_t handle;
+
+        xTaskCreate(menu_main, "menu_main", 4096, NULL, 1, &handle);
+
+        // Assign UI selection buttons
+    }
+
     Menu::Menu(SSD1306 &display) : display(display), program_count(0), programs{}
     {
-        // Print on screen a gabelab welcome message
         display.clear_all();
         display.print_text_on_line("Welcome to Gabe's Menu", LINE_0);
+
+        // Assign UI selection buttons
+
     }
 
     esp_err_t Menu::add_program(const char *program_name)
@@ -29,8 +53,14 @@ extern "C"
         }
 
         program_t new_program;
+        new_program.program_id = program_count;
+        new_program.program_task = NULL;
         strncpy(new_program.program_name, program_name, length);
         programs[program_count++] = new_program;
+
+        // Add pointers to program task
+
+
 
         return ESP_OK;
     }
@@ -47,12 +77,20 @@ extern "C"
 
     esp_err_t Menu::program_select()
     {
+        // Start associated init function of task
+        // Get task handle of running program
+        // Add task handle to running programs earlier
         return ESP_OK;
     }
 
     esp_err_t Menu::program_end()
     {
         return ESP_OK;
+    }
+
+    void main()
+    {
+        
     }
 
 #ifdef __cplusplus

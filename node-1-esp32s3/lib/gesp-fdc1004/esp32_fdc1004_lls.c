@@ -4,10 +4,11 @@ esp_err_t check_fdc1004(i2c_port_t port)
 {
     uint16_t data;
     read_register(port, FDC_DEVICE_ID_REG, &data);
+    // printf("%d\n", data);
     if (data != 0x1004)
     {
-        // printf("FDC1004 not detected! Data: 0x%.4X\n", data);
-        printf("FDC1004 not detected!");
+        printf("FDC1004 not detected! Data: 0x%.4X\n", data);
+        // printf("FDC1004 not detected!\n");
         return ESP_ERR_NOT_FOUND;
     }
     return ESP_OK;
@@ -46,8 +47,8 @@ esp_err_t fdc_reset(i2c_port_t port)
 
 fdc_channel_t init_channel(i2c_port_t port, uint8_t channel, uint8_t rate)
 {
-    if (!FDC1004_IS_CHANNEL(channel))
-        return NULL;
+    // if (!FDC1004_IS_CHANNEL(channel))
+    //     return NULL;
 
     if (!FDC1004_IS_RATE(rate))
         return NULL;
@@ -139,11 +140,11 @@ esp_err_t configure_channel(fdc_channel_t channel_obj)
 {
     esp_err_t error;
     uint8_t config[3];
-    uint8_t gain[3];
-    uint8_t offset[3];
+    // uint8_t gain[3];
+    // uint8_t offset[3];
 
     // Build 16 bit configuration
-    // printf("Channel: %d\n", channel_obj->channel);
+    printf("Channel: %d\n", channel_obj->channel);
     uint16_t configuration = (uint16_t)(channel_obj->channel) << 13; // CHA
     configuration |= 0x1C00;                                         // CAPDAC
     configuration |=  ((uint16_t)0x04) << 10; //CHB disable / CAPDAC enable
@@ -157,19 +158,19 @@ esp_err_t configure_channel(fdc_channel_t channel_obj)
         ESP_LOGE(FDC_TAG, "CONFIG ERROR | Code: 0x%.2X", error);
 
     // Configure gain
-    int16_t integer_part = (uint16_t)(GAIN_CAL);
-    uint8_t decimal_part = GAIN_CAL - integer_part;
-    uint16_t encoded_gain = integer_part << 14;
-    uint16_t encoded_decimal = (uint16_t)(decimal_part * 16383);
-    encoded_gain |= encoded_decimal;
-    encoded_gain = 0x2000;
+    // int16_t integer_part = (uint16_t)(GAIN_CAL);
+    // uint8_t decimal_part = GAIN_CAL - integer_part;
+    // uint16_t encoded_gain = integer_part << 14;
+    // uint16_t encoded_decimal = (uint16_t)(decimal_part * 16383);
+    // encoded_gain |= encoded_decimal;
+    // encoded_gain = 0x2000;
 
-    gain[0] = channel_obj->gain_register;
-    gain[1] = (uint8_t)(encoded_gain >> 8);
-    gain[2] = (uint8_t)(encoded_gain);
-    error = i2c_master_write_to_device(channel_obj->port, FDC_SLAVE_ADDRESS, gain, sizeof(gain), pdMS_TO_TICKS(200));
-    if (error != ESP_OK)
-        ESP_LOGE(FDC_TAG, "GAIN CONFIG ERROR | Code: 0x%.2X", error);
+    // gain[0] = channel_obj->gain_register;
+    // gain[1] = (uint8_t)(encoded_gain >> 8);
+    // gain[2] = (uint8_t)(encoded_gain);
+    // error = i2c_master_write_to_device(channel_obj->port, FDC_SLAVE_ADDRESS, gain, sizeof(gain), pdMS_TO_TICKS(200));
+    // if (error != ESP_OK)
+    //     ESP_LOGE(FDC_TAG, "GAIN CONFIG ERROR | Code: 0x%.2X", error);
 
     // Configure offset
     // integer_part = (uint16_t)(OFFSET_CAL);
@@ -219,7 +220,7 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
     // }
 
     // Wait for measurement to complete
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     done_status = 0;
     read_register(channel_obj->port, FDC_REGISTER, &done_status);
@@ -240,7 +241,7 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
 
         int32_t raw_measurement_value = ((int32_t)raw_msb << 8) | ((int32_t)raw_lsb >> 8);
         printf("Raw value: %ld\n", raw_measurement_value);
-        printf("Capacitance: %.5f pF\n", (float)(raw_measurement_value >> 16) / 8);
+        printf("Capacitance: %.2f pF\n", (float)(raw_measurement_value >> 16) / 8);
         printf("========================================\n");
         channel_obj->raw_value = (float)((raw_measurement_value >> 16) / 1000);
     }
@@ -271,8 +272,8 @@ esp_err_t update_measurements(level_calc_t level_calc)
         return esp_rc;
 
     configure_channel(level_calc->ref_channel);
-    // configure_channel(level_calc->lev_channel);
-    // configure_channel(level_calc->env_channel);
+    configure_channel(level_calc->lev_channel);
+    configure_channel(level_calc->env_channel);
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 

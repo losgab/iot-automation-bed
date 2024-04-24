@@ -24,9 +24,7 @@
 
 #define FDC1004_CAPDAC_MAX (0x1F)
 
-#define FDC1004_CHANNEL_MIN (0x0)
-#define FDC1004_CHANNEL_MAX (0x3)
-#define FDC1004_IS_CHANNEL(x) (FDC1004_CHANNEL_MIN <= x && x <= FDC1004_CHANNEL_MAX)
+#define FDC1004_IS_CHANNEL(x) (0x0 <= x && x < 0x4)
 
 #define FDC1004_IS_CONFIG_ADDRESS(a) (0x08 <= a && a <= 0x0B)
 
@@ -42,7 +40,7 @@
 #define FDC1004_UPPER_BOUND ((int16_t)0x4000)
 #define FDC1004_LOWER_BOUND (-1 * FDC1004_UPPER_BOUND)
 
-#define GAIN_CAL 0.2
+#define GAIN_CAL 1
 #define OFFSET_CAL -0.5
 
 static const uint8_t config[] = {0x08, 0x09, 0x0A, 0x0B};
@@ -64,9 +62,9 @@ static const uint8_t gain_registers[] = {0x11, 0x12, 0x13, 0x14};
 
 #define CALIBRATION_FREQ 5000 // frequency of self calibration (ms)
 
-#define REF_CHANNEL 1
-#define LEV_CHANNEL 2
-#define ENV_CHANNEL 3
+#define ENV_CHANNEL 1 // CIN1
+#define LEV_CHANNEL 2 // CIN2
+#define REF_CHANNEL 3 // CIN3
 #define LNV_CHANNEL 4
 
 // Measurement Output
