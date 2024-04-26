@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "driver/i2c.h"
+// #include "driver/i2c.h"
 #include "esp_log.h"
 #include "esp_check.h"
 #include "string.h"
@@ -23,8 +23,8 @@
 
 // GSSD1306 defines
 #define SSD1306_TAG "SSD1306"
-#define MAX_CHARACTERS_PER_LINE 16
 
+#define MAX_CHARACTERS_PER_LINE 16
 #define MAX_PAGES 8
 
 // Following definitions are bollowed from
@@ -34,9 +34,9 @@
 #define OLED_I2C_ADDRESS 0x3C
 
 // Control byte (Co bit + D/C# bit + 6 zero bits)
-#define OLED_CONTROL_BYTE_CMD_SINGLE 0x80
+#define OLED_CONTROL_BYTE_CMD_SINGLE 0x80 // For single command
 #define OLED_CONTROL_BYTE_CMD_STREAM 0x00
-#define OLED_CONTROL_BYTE_DATA_STREAM 0x40
+#define OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM 0x40 // For transferring data into the GDDRAM
 
 // Fundamental commands (pg.28)
 #define OLED_CMD_SET_CONTRAST 0x81 // follow with 0x7F
@@ -46,11 +46,14 @@
 #define OLED_CMD_DISPLAY_INVERTED 0xA7
 #define OLED_CMD_DISPLAY_OFF 0xAE
 #define OLED_CMD_DISPLAY_ON 0xAF
+#define OLED_SET_PAGE_ADDRESS 0xB0 // Set page with [2:0], 0 -> top, 7 -> bottom
+#define OLED_SET_LWR_COLOUMN_START_ADDR 0x00 // Lower bits of coloumn number in [3:0], 0x00 -> 0x0F
+#define OLED_SET_UPR_COLOUMN_START_ADDR 0x10 // Upper bits of coloumn number in [3:0], 0x10 -> 0x1F
 
 // Addressing Command Table (pg.30)
-#define OLED_CMD_SET_MEMORY_ADDR_MODE 0x20 // follow with 0x00 = HORZ mode = Behave like a KS108 graphic LCD
-#define OLED_CMD_SET_COLUMN_RANGE 0x21     // can be used only in HORZ/VERT mode - follow with 0x00 and 0x7F = COL127
-#define OLED_CMD_SET_PAGE_RANGE 0x22       // can be used only in HORZ/VERT mode - follow with 0x00 and 0x07 = PAGE7
+#define OLED_CMD_SET_HORZ_ADDR_MODE 0x20 // Set Horizontal Addresing Mode
+#define OLED_CMD_SET_VERT_ADDR_MODE 0x21 // Set Vertical Addresing Mode
+#define OLED_CMD_SET_PAGE_ADDR_MODE 0x22 // Set Page Addresing Mode
 
 // Hardware Config (pg.31)
 #define OLED_CMD_SET_DISPLAY_START_LINE 0x40
@@ -80,6 +83,26 @@ typedef enum {
     LINE_7,
     MAX_LINES
 } line_num_t;
+
+typedef enum {
+    COL_0,
+    COL_1,
+    COL_2,
+    COL_3,
+    COL_4,
+    COL_5,
+    COL_6,
+    COL_7,
+    COL_8,
+    COL_9,
+    COL_10,
+    COL_11,
+    COL_12,
+    COL_13,
+    COL_14,
+    COL_15,
+    MAX_COLS
+} col_num_t;
 
 typedef struct ssd1306_display
 {
@@ -115,6 +138,17 @@ typedef struct ssd1306_display
     */
     esp_err_t (*print_text_on_line)(struct ssd1306_display *device, const char *text, line_num_t line);
 
+    /**
+     * @brief Writes text onto specified line on the display.
+     * 
+     * @param self Pointer to ssd1306_t struct
+     * @param char Char to display
+     * @param line Line to display text on (0 - MAX_ROWS)
+     * 
+     * @return void, needs to return invalid 
+    */
+    esp_err_t (*print_8x8basic)(struct ssd1306_display *device, const char character, line_num_t line, col_num_t col);
+
 } ssd1306_t;
 
 /**
@@ -133,14 +167,6 @@ esp_err_t gesp_ssd1306_init(i2c_port_t port, ssd1306_t *ret_ssd1306_device);
  * @return void
  */
 void ssd1306_init();
-
-/**
- * @brief Display text on SSD1306 display
- *
- * @param pvParameters from TaskCreate
- *
- * @return void
- */
 
 void task_ssd1306_display_pattern(void *ignore);
 

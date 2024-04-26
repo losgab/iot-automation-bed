@@ -1,14 +1,25 @@
 #ifndef MENU_UI_H
 #define MENU_UI_H
 
-#include <driver/gpio.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <freertos/FreeRTOS.h>
+// #include "freertos/task.h"
+#include "driver/gpio.h"
+#include <driver/i2c_master.h>
 // #include "gesp-ssd1306.h"
 #include "esp-ssd1306.h"
+#include "iot_button.h"
 #include "esp_err.h"
 #include "esp_log.h"
 
+// I2C Configuration
+#define SSD1306_I2C_PORT I2C_NUM_0
+
 #define MAX_NUM_PROGRAMS 4
-#define MAX_PROGRAM_NAME_LEN 12
+#define MAX_PROGRAM_NAME_LEN 10
 
 #define MENU_TAG "Gabe's Menu"
 
@@ -21,6 +32,8 @@ typedef struct program
     void (*program_start)(void);
     void (*program_end)(void);
 } program_t;
+
+TaskHandle_t menu_init(button_handle_t buttons[]);
 
 // Built for SSD1306 screens
 class Menu
@@ -39,22 +52,22 @@ public:
     /**
      * @brief Moves cursor to next program.
      */
-    esp_err_t cursor_down();
+    void cursor_down();
 
     /**
      * @brief Moves cursor to previous program.
      */
-    esp_err_t cursor_up();
+    void cursor_up();
 
     /**
      * @brief Selects current program & calls an initialisation function.
      */
-    esp_err_t program_select();
+    void program_select();
 
     /**
      * @brief Selects current program & calls an end function.
      */
-    esp_err_t program_end();
+    void program_end();
 
     /**
      * @brief Destroys MenuUI instance.
@@ -62,10 +75,16 @@ public:
     ~Menu();
 
 private:
-    SSD1306 display;
+    ssd1306_t display;
     uint8_t curr_programs;
     uint8_t program_count;
-    BaseType_t suspended_tasks[MAX_NUM_PROGRAMS]{};
+    line_num_t cursor_pos;
+    TaskHandle_t suspended_tasks[MAX_NUM_PROGRAMS]{};
     program_t programs[MAX_NUM_PROGRAMS]{};
 };
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
