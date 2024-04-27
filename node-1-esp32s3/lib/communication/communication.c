@@ -1,7 +1,7 @@
 #include "communication.h"
 
-unsigned int write_buffer_len = 0;
-uint8_t write_buffer[BUFF_LEN] = {0};
+static unsigned int write_buffer_len = 0;
+static uint8_t write_buffer[BUFF_LEN] = {0};
 
 esp_err_t i2c_master_init(i2c_port_t port, gpio_num_t sda, gpio_num_t scl, i2c_master_bus_handle_t *ret_handle)
 {
@@ -21,7 +21,8 @@ esp_err_t i2c_master_init(i2c_port_t port, gpio_num_t sda, gpio_num_t scl, i2c_m
 
 void i2c_clear_write_buffer()
 {
-	memset(write_buffer, 0, BUFF_LEN);
+	// printf("Asdhkahkjsdhjahsjd\n");
+	memset(write_buffer, 0, sizeof(uint8_t) * BUFF_LEN);
 	write_buffer_len = 0;
 }
 
@@ -50,11 +51,20 @@ void i2c_write_bytes(const uint8_t *bytes, const int len)
 	write_buffer_len = write_buffer_len + len;
 }
 
+void i2c_write_zero(const int len)
+{
+	write_buffer_len += len;
+}
+
 esp_err_t i2c_transmit_write_buffer(i2c_master_dev_handle_t slave_handle)
 {
 	esp_err_t esp_rc;
 	
-	esp_rc = i2c_master_transmit(slave_handle, write_buffer, write_buffer_len, 100);
+	esp_rc = i2c_master_transmit(slave_handle, write_buffer, write_buffer_len, -1);
+	for (int i = 0; i < write_buffer_len; i++)
+	{
+		printf("Byte %d: %x\n", i, write_buffer[i]);
+	}
 
 	if (esp_rc != ESP_OK)
 	{

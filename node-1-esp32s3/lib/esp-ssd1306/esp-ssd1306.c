@@ -1,119 +1,6 @@
 #include "font8x8_basic.h"
 #include "esp-ssd1306.h"
 
-// void task_ssd1306_display_text(void *pvParameters)
-// {
-// 	char *text = "Hello world!\nGood Stuff!\n";
-// 	uint8_t text_len = strlen(text);
-
-// 	i2c_cmd_handle_t cmd;
-
-// 	uint8_t cur_page = 0;
-
-// 	cmd = i2c_cmd_link_create();
-// 	i2c_master_start(cmd);
-// 	i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-// 	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-// 	i2c_master_write_byte(cmd, 0x00, true); // reset column
-// 	i2c_master_write_byte(cmd, 0x10, true);
-// 	i2c_master_write_byte(cmd, 0xB0 | cur_page, true); // reset page
-
-// 	i2c_master_stop(cmd);
-// 	i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
-// 	i2c_cmd_link_delete(cmd);
-
-// 	for (uint8_t i = 0; i < text_len; i++)
-// 	{
-// 		if (text[i] == '\n')
-// 		{
-// 			cmd = i2c_cmd_link_create();
-// 			i2c_master_start(cmd);
-// 			i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-// 			i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-// 			i2c_master_write_byte(cmd, 0x00, true); // reset column
-// 			i2c_master_write_byte(cmd, 0x10, true);
-// 			i2c_master_write_byte(cmd, 0xB0 | ++cur_page, true); // increment page
-
-// 			i2c_master_stop(cmd);
-// 			i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
-// 			i2c_cmd_link_delete(cmd);
-// 		}
-// 		else
-// 		{
-// 			cmd = i2c_cmd_link_create();
-// 			i2c_master_start(cmd);
-// 			i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-// 			i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-// 			i2c_master_write(cmd, (uint8_t *)(font8x8_basic[(uint8_t)text[i]]), 8, true);
-
-// 			i2c_master_stop(cmd);
-// 			i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
-// 			i2c_cmd_link_delete(cmd);
-// 		}
-// 	}
-
-// 	vTaskDelete(NULL);
-// }
-
-// void task_ssd1306_display_pattern(void *ignore)
-// {
-// 	i2c_cmd_handle_t cmd;
-
-// 	for (uint8_t i = 0; i < 8; i++)
-// 	{
-// 		cmd = i2c_cmd_link_create();
-// 		i2c_master_start(cmd);
-// 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-// 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_SINGLE, true);
-// 		i2c_master_write_byte(cmd, 0xB0 | i, true);
-// 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-// 		for (uint8_t j = 0; j < 128; j++)
-// 		{
-// 			i2c_master_write_byte(cmd, 0xFF >> (j % 8), true);
-// 		}
-// 		i2c_master_stop(cmd);
-// 		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
-// 		i2c_cmd_link_delete(cmd);
-// 	}
-
-// 	vTaskDelete(NULL);
-// }
-
-// void task_ssd1306_contrast(void *ignore)
-// {
-// 	i2c_cmd_handle_t cmd;
-
-// 	uint8_t contrast = 0;
-// 	uint8_t direction = 1;
-// 	while (true)
-// 	{
-// 		cmd = i2c_cmd_link_create();
-// 		i2c_master_start(cmd);
-// 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-// 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-// 		i2c_master_write_byte(cmd, OLED_CMD_SET_CONTRAST, true);
-// 		i2c_master_write_byte(cmd, contrast, true);
-// 		i2c_master_stop(cmd);
-// 		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
-// 		i2c_cmd_link_delete(cmd);
-// 		vTaskDelay(1 / portTICK_PERIOD_MS);
-
-// 		contrast += direction;
-// 		if (contrast == 0xFF)
-// 		{
-// 			direction = -1;
-// 		}
-// 		if (contrast == 0x0)
-// 		{
-// 			direction = 1;
-// 		}
-// 	}
-// 	vTaskDelete(NULL);
-// }
-
 // void task_ssd1306_scroll(void *ignore)
 // {
 // 	esp_err_t espRc;
@@ -155,49 +42,29 @@
 
 void ssd1306_clear_display(ssd1306_t *device)
 {
-	uint8_t zero[128] = {0}; // 128 bytes of 0, enough for one full page
-
-	i2c_clear_write_buffer();
-
 	for (uint8_t page = 0; page < MAX_PAGES; page++)
 	{
+		i2c_clear_write_buffer();
+		i2c_write_byte(OLED_CONTROL_BYTE_CMD);
 		i2c_write_byte(OLED_SET_PAGE_ADDRESS | page);
-		i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR); // Set the coloun address
-		i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR); // Set the coloun address
+		i2c_write_byte(OLED_CONTROL_BYTE_CMD);
+		i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR);
+		i2c_write_byte(OLED_CONTROL_BYTE_CMD);
+		i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR);
 		i2c_write_byte(OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM);
-		i2c_write_bytes(zero, 128);
+		i2c_write_zero(128);
+		i2c_transmit_write_buffer(device->slave_handle);
 	}
-	i2c_transmit_write_buffer(device->slave_handle);
-
-	// i2c_cmd_handle_t cmd;
-
-	// for (uint8_t i = 0; i < MAX_PAGES; i++)
-	// {
-	// 	cmd = i2c_cmd_link_create();
-	// 	i2c_master_start(cmd);
-	// 	i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-	// 	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_SINGLE, true);
-	// 	i2c_master_write_byte(cmd, 0xB0 | i, true);
-
-	// 	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM, true);
-	// 	i2c_master_write(cmd, zero, 128, true);
-	// 	i2c_master_stop(cmd);
-	// 	i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);
-	// 	i2c_cmd_link_delete(cmd);
-	// }
 }
 
 void ssd1306_clear_line(ssd1306_t *device, line_num_t line)
 {
-
-	uint8_t zero[128] = {0}; // 128 bytes of 0, enough for one full page
-	i2c_clear_write_buffer();
-
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD_STREAM);
 	i2c_write_byte(OLED_SET_PAGE_ADDRESS | line);
-	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR); // Set the coloun address
-	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR); // Set the coloun address
+	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR);
+	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR);
 	i2c_write_byte(OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM);
-	i2c_write_bytes(zero, 128);
+	i2c_write_zero(128);
 	i2c_transmit_write_buffer(device->slave_handle);
 
 	// i2c_cmd_handle_t cmd;
@@ -235,53 +102,12 @@ esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, line_n
 	ESP_RETURN_ON_FALSE(text_len <= MAX_CHARACTERS_PER_LINE, ESP_ERR_INVALID_ARG, SSD1306_TAG, "More characters than can fit on one line");
 	ESP_RETURN_ON_FALSE(line < MAX_LINES, ESP_ERR_INVALID_ARG, SSD1306_TAG, "Invalid line number");
 
-	// i2c_cmd_handle_t cmd;
-
-	// cmd = i2c_cmd_link_create();
-	// i2c_master_start(cmd);
-	// i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-	// i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-	// i2c_master_write_byte(cmd, OLED_SET_PAGE_ADDRESS | line, true);	   // Sets the cursor to start of appropriate line
-	// i2c_master_write_byte(cmd, OLED_SET_LWR_COLOUMN_START_ADDR, true); // Reset coloumn pointer to 0
-	// i2c_master_write_byte(cmd, OLED_SET_UPR_COLOUMN_START_ADDR, true); // Reset coloumn pointer to 0
-
-	// i2c_master_stop(cmd);
-	// i2c_master_cmd_begin(device->port, cmd, pdMS_TO_TICKS(500));
-
-	// uint8_t zero[8] = {0};
-	// for (uint8_t i = 0; i < MAX_CHARACTERS_PER_LINE; i++)
-	// {
-	// 	if (i < text_len)
-	// 	{
-	// 		i2c_master_start(cmd);
-	// 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-	// 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM, true);
-	// 		i2c_master_write(cmd, (uint8_t *)(font8x8_basic[(uint8_t)text[i]]), 8, true);
-
-	// 		i2c_master_stop(cmd);
-	// 		i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);
-	// 	}
-	// 	else
-	// 	{
-	// 		cmd = i2c_cmd_link_create();
-	// 		i2c_master_start(cmd);
-	// 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-	// 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM, true);
-	// 		i2c_master_write(cmd, zero, 8, true);
-
-	// 		i2c_master_stop(cmd);
-	// 		i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);
-	// 	}
-	// }
-
-	// i2c_cmd_link_delete(cmd);
-
 	i2c_clear_write_buffer();
-	i2c_write_byte(OLED_CONTROL_BYTE_CMD_STREAM);
-	i2c_write_byte(OLED_SET_PAGE_ADDRESS);
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
+	i2c_write_byte(OLED_SET_PAGE_ADDRESS | line);
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
 	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR);
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
 	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR);
 	i2c_write_byte(OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM);
 
@@ -294,7 +120,7 @@ esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, line_n
 		}
 		else
 		{
-			i2c_write_bytes(zero, 8);
+			i2c_write_bytes(zero, 8); // Writes 8x8 bits, 1 char
 		}
 	}
 
@@ -304,38 +130,15 @@ esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, line_n
 
 esp_err_t ssd1306_print_8x8basic(ssd1306_t *device, const char character, line_num_t line, col_num_t col)
 {
-	ESP_RETURN_ON_FALSE(col < MAX_COLS, ESP_ERR_INVALID_ARG, SSD1306_TAG, "Invalid column number");
 	ESP_RETURN_ON_FALSE(line < MAX_LINES, ESP_ERR_INVALID_ARG, SSD1306_TAG, "Invalid line number");
-	// i2c_cmd_handle_t cmd;
-
-	// // Sets the cursor to start of appropriate line
-	// cmd = i2c_cmd_link_create();
-	// i2c_master_start(cmd);
-	// i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-	// i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-	// i2c_master_write_byte(cmd, OLED_SET_PAGE_ADDRESS | line, true);
-	// i2c_master_write_byte(cmd, OLED_SET_LWR_COLOUMN_START_ADDR, true); // Set the coloun address
-	// i2c_master_write_byte(cmd, OLED_SET_UPR_COLOUMN_START_ADDR, true); // Set the coloun address
-	// i2c_master_stop(cmd);
-	// i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);
-	// i2c_cmd_link_delete(cmd);
-
-	// // Writes the char
-	// cmd = i2c_cmd_link_create();
-	// i2c_master_start(cmd);
-	// i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-
-	// i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM, true);
-	// i2c_master_write(cmd, (uint8_t *)(font8x8_basic[(uint8_t)character]), 8, true);
-	// i2c_master_stop(cmd);
-	// i2c_master_cmd_begin(device->port, cmd, 10 / portTICK_PERIOD_MS);
-	// i2c_cmd_link_delete(cmd);
 
 	i2c_clear_write_buffer();
-	i2c_write_byte(OLED_CONTROL_BYTE_CMD_STREAM);
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
 	i2c_write_byte(OLED_SET_PAGE_ADDRESS | line);
-	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR);
-	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR);
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
+	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR | (col & 0x0F));
+	i2c_write_byte(OLED_CONTROL_BYTE_CMD);
+	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR | ((col & 0xF0) >> 4));
 	i2c_write_byte(OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM);
 	i2c_write_bytes((uint8_t *)(font8x8_basic[(uint8_t)character]), 8);
 
@@ -344,55 +147,50 @@ esp_err_t ssd1306_print_8x8basic(ssd1306_t *device, const char character, line_n
 	return ESP_OK;
 }
 
-esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, i2c_master_dev_handle_t *slave_handle, ssd1306_t *ret_ssd1306_device)
+esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, ssd1306_t *ret_ssd1306_device)
 {
 	esp_err_t esp_rc;
 
 	// Adding SSD1306 device to the I2C bus
+	i2c_master_dev_handle_t slave_handle;
 	i2c_device_config_t dev_cfg = {
 		.dev_addr_length = I2C_ADDR_BIT_LEN_7,
 		.device_address = OLED_I2C_ADDRESS,
-		.scl_speed_hz = 100000,
+		.scl_speed_hz = 400000,
 	};
-	ESP_ERROR_CHECK(i2c_master_bus_add_device(master_bus, &dev_cfg, slave_handle));
+	ESP_ERROR_CHECK(i2c_master_bus_add_device(master_bus, &dev_cfg, &slave_handle));
 
 	ret_ssd1306_device->bus = master_bus;
-	ret_ssd1306_device->slave_handle = *slave_handle;
+	ret_ssd1306_device->slave_handle = slave_handle;
 	ret_ssd1306_device->clear_display = ssd1306_clear_display;
 	ret_ssd1306_device->clear_line = ssd1306_clear_line;
 	ret_ssd1306_device->print_text_on_line = ssd1306_print_text_on_line;
 	ret_ssd1306_device->print_8x8basic = ssd1306_print_8x8basic;
 
+	i2c_clear_write_buffer();
 	i2c_write_byte(OLED_CONTROL_BYTE_CMD_STREAM);
+
 	i2c_write_byte(OLED_CMD_SET_PAGE_ADDR_MODE);
 	i2c_write_byte(OLED_SET_LWR_COLOUMN_START_ADDR);
 	i2c_write_byte(OLED_SET_UPR_COLOUMN_START_ADDR);
+
+	i2c_write_byte(OLED_CMD_SET_MUX_RATIO); // 1
+	i2c_write_byte(0x3F);
+
+	i2c_write_byte(OLED_CMD_SET_DISPLAY_OFFSET); // 2
+	i2c_write_byte(0x00);
+
+	i2c_write_byte(OLED_CMD_SET_DISPLAY_START_LINE); // 3
+
+	i2c_write_byte(OLED_CMD_SET_SEGMENT_REMAP); // 4
+	i2c_write_byte(OLED_CMD_SET_COM_SCAN_MODE); // 5
+
 	i2c_write_byte(OLED_CMD_SET_CHARGE_PUMP);
 	i2c_write_byte(OLED_CMD_CHARGE_PUMP_ON);
-	i2c_write_byte(OLED_CMD_SET_SEGMENT_REMAP);
-	i2c_write_byte(OLED_CMD_SET_COM_SCAN_MODE);
+
 	i2c_write_byte(OLED_CMD_DISPLAY_ON);
-	esp_rc = i2c_transmit_write_buffer(*slave_handle);
+	esp_rc = i2c_transmit_write_buffer(slave_handle);
 
-	// ESP_ERROR_CHECK(i2c_master_transmit(master_bus, data_wr, DATA_LENGTH, -1));
-	// i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-	// i2c_master_start(cmd);
-	// i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
-	// i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-	// i2c_master_write_byte(cmd, OLED_CMD_SET_PAGE_ADDR_MODE, true);
-	// i2c_master_write_byte(cmd, OLED_SET_LWR_COLOUMN_START_ADDR, true);
-	// i2c_master_write_byte(cmd, OLED_SET_UPR_COLOUMN_START_ADDR, true);
-
-	// i2c_master_write_byte(cmd, OLED_CMD_SET_CHARGE_PUMP, true);
-	// i2c_master_write_byte(cmd, 0x14, true); // Enable Charge Pump
-
-	// i2c_master_write_byte(cmd, OLED_CMD_SET_SEGMENT_REMAP, true); // reverse left-right mapping
-	// i2c_master_write_byte(cmd, OLED_CMD_SET_COM_SCAN_MODE, true); // reverse up-bottom mapping
-
-	// i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_ON, true);
-	// i2c_master_stop(cmd);
-
-	// espRc = i2c_master_cmd_begin(port, cmd, 10 / portTICK_PERIOD_MS);
 	if (esp_rc == ESP_OK)
 	{
 		ESP_LOGI(SSD1306_TAG, "OLED configured successfully");
@@ -401,6 +199,5 @@ esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, i2c_master_dev_h
 	{
 		ESP_LOGE(SSD1306_TAG, "OLED configuration failed. code: 0x%.2X", esp_rc);
 	}
-	// i2c_cmd_link_delete(cmd);
 	return esp_rc;
 }

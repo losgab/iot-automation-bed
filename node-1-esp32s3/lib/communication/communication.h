@@ -17,7 +17,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 
-#define BUFF_LEN 256
+#define BUFF_LEN 1024
 
 /**
  * @brief Macro Function for shortcutting setting up I2C Master communication
@@ -36,6 +36,8 @@ void i2c_clear_write_buffer();
 void i2c_write_byte(const uint8_t byte);
 
 void i2c_write_bytes(const uint8_t *bytes, const int len);
+
+void i2c_write_zero(const int len);
 
 esp_err_t i2c_transmit_write_buffer(i2c_master_dev_handle_t slave_handle);
 

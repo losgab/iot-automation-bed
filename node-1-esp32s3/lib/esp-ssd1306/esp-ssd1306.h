@@ -40,8 +40,8 @@
 #define OLED_I2C_ADDRESS 0x3C
 
 // Control byte (Co bit + D/C# bit + 6 zero bits)
-#define OLED_CONTROL_BYTE_CMD_SINGLE 0x80 // For single command
-#define OLED_CONTROL_BYTE_CMD_STREAM 0x00
+#define OLED_CONTROL_BYTE_CMD 0x80 // For single command
+#define OLED_CONTROL_BYTE_CMD_STREAM 0x00 // For single command
 #define OLED_CONTROL_BYTE_GDDRAM_DATA_STREAM 0x40 // For transferring data into the GDDRAM
 
 // Fundamental commands (pg.28)
@@ -91,25 +91,7 @@ typedef enum {
     MAX_LINES
 } line_num_t;
 
-typedef enum {
-    COL_0,
-    COL_1,
-    COL_2,
-    COL_3,
-    COL_4,
-    COL_5,
-    COL_6,
-    COL_7,
-    COL_8,
-    COL_9,
-    COL_10,
-    COL_11,
-    COL_12,
-    COL_13,
-    COL_14,
-    COL_15,
-    MAX_COLS
-} col_num_t;
+typedef uint8_t col_num_t;
 
 typedef struct ssd1306_display
 {
@@ -163,12 +145,11 @@ typedef struct ssd1306_display
  * @brief Initializes SSD1306 display. Gabriel's library for the ESP-IDF through I2C.
  * 
  * @param master_bus I2C bus handle
- * @param slave_handle I2C device handle
  * @param ret_ssd1306_device Pointer to ssd1306_t struct
  * 
  * @return esp_err_t ESP_OK if successful, otherwise error code
 */
-esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, i2c_master_dev_handle_t *slave_handle, ssd1306_t *ret_ssd1306_device);
+esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, ssd1306_t *ret_ssd1306_device);
 
 /**
  * @brief Initialize SSD1306 display
