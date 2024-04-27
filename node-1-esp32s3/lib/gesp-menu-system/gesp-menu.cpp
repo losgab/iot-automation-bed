@@ -7,9 +7,9 @@ extern "C"
 {
 #endif
 
-    Menu::Menu()
+    Menu::Menu(i2c_master_bus_handle_t bus)
     {
-        gesp_ssd1306_init(0, &display);
+        gesp_ssd1306_init(bus, &slave_handle, &display);
 
         curr_programs = 0, program_count = 2;
 

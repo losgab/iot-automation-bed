@@ -47,9 +47,11 @@ esp_err_t unregister_menu_buttons(button_handle_t buttons[])
 
 void menu_main(void *pvParameter)
 {
-    button_handle_t *buttons = (button_handle_t *)pvParameter;
+    menu_task_params_t *params = (menu_task_params_t *)pvParameter;
+    i2c_master_bus_handle_t master_bus = params->master_bus;
+    button_handle_t *buttons = params->button_handles;
 
-    Menu menu();
+    Menu menu(master_bus);
 
     // Add programs to Menu here
     // menu.add_program();
@@ -63,10 +65,10 @@ void menu_main(void *pvParameter)
     // };
 
     // Initialise button functionality here
-    // register_menu_buttons(menu, buttons);
     if (buttons[0] == NULL) {
         printf("Buttons not found!\n");
     }
+    register_menu_buttons(menu, buttons);
     // display.clear_display(&display);
     // display.print_text_on_line(&display, "Gabe's System", LINE_0);
     // display.print_text_on_line(&display, " 1.Program 1", LINE_2);
@@ -79,13 +81,6 @@ void menu_main(void *pvParameter)
     }
 }
     
-TaskHandle_t menu_init(button_handle_t buttons[])
-{
-    TaskHandle_t handle = 0;
-    xTaskCreate(menu_main, "menu_main", 4096, buttons, 1, &handle);
-    return handle;
-}
-
 #ifdef __cplusplus
 }
 #endif

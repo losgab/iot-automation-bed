@@ -3,22 +3,21 @@
 #include <freertos/queue.h>
 #include <freertos/timers.h>
 // #include <driver/uart.h>
-#include <driver/i2c.h>
+
+#include <driver/i2c_master.h>
 #include <driver/gpio.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
-
 
 #define SYS_DELAY(x) vTaskDelay(pdMS_TO_TICKS(x))
 
 // LED Strip Configuration
 extern "C"
 {
-    #include "communication.h"
-    #include "gled_strip.h"
-    #include "esp32_fdc1004_lls.h"
-    #include "gesp-system.h" // Menu
+#include "gled_strip.h"
+#include "esp32_fdc1004_lls.h"
+#include "gesp-system.h" // Menu
 }
 #define STRIP_1_PIN GPIO_NUM_42
 #define STRIP_1_NUM_LEDS 2
@@ -38,7 +37,12 @@ led_strip_handle_t strip1;
 #define BUTTON_3 GPIO_NUM_34
 #define BUTTON_4 GPIO_NUM_33
 #define BUTTON_TAG "Button Tag"
-button_handle_t button_handles[4];
+TaskHandle_t task_menu;
+i2c_master_bus_handle_t handle0;
+menu_task_params_t params = {
+    .master_bus = handle0,
+    .button_handles = {},
+};
 
 void button_init()
 {
@@ -57,13 +61,13 @@ void button_init()
 
     gpio_btn_cfg.gpio_button_config.gpio_num = BUTTON_2;
     button_handle_t button2 = iot_button_create(&gpio_btn_cfg);
-    
+
     gpio_btn_cfg.gpio_button_config.gpio_num = BUTTON_3;
     button_handle_t button3 = iot_button_create(&gpio_btn_cfg);
-    
+
     gpio_btn_cfg.gpio_button_config.gpio_num = BUTTON_4;
     button_handle_t button4 = iot_button_create(&gpio_btn_cfg);
-    
+
     if (NULL == button1)
         ESP_LOGE(BUTTON_TAG, "Button 1 create failed");
     if (NULL == button2)
@@ -73,10 +77,10 @@ void button_init()
     if (NULL == button4)
         ESP_LOGE(BUTTON_TAG, "Button 4 create failed");
 
-    button_handles[0] = button1;
-    button_handles[1] = button2;
-    button_handles[2] = button3;
-    button_handles[3] = button4;
+    params.button_handles[0] = button1;
+    params.button_handles[1] = button2;
+    params.button_handles[2] = button3;
+    params.button_handles[3] = button4;
 }
 
 extern "C" void app_main()
@@ -90,9 +94,8 @@ extern "C" void app_main()
     // Initialise Buttons
     button_init();
 
-    i2c_master_bus_handle_t handle0;
-    i2c_master_init(I2C_NUM_0, I2C_0_MASTER_SDA, I2C_0_MASTER_SCL, handle0);
-    // i2c_init(I2C_MODE_MASTER, I2C_NUM_1, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL);
+    i2c_master_init(I2C_NUM_0, I2C_0_MASTER_SDA, I2C_0_MASTER_SCL, &handle0);
+    // i2c_master_init(I2C_NUM_1, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL, handle1);
 
     // Add programs to menu to choose from
     // Add LED changing program
@@ -100,10 +103,13 @@ extern "C" void app_main()
     // Add FDC1004 Level Sensing Calculator program
 
     // level_calc_t level_sensor = init_level_calculator(I2C_NUM_1);
-    esp_err_t esp_rc;
-    
-    menu_init(button_handles);
-    
+    // esp_err_t esp_rc;
+
+    xTaskCreate(menu_main, "menu_main", 4096, &params, 1, &task_menu);
+
+    for (;;)
+    {
+    }
     // while (1)
     // {
     //     // SYS_DELAY(1000);

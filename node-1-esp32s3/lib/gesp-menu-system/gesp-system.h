@@ -33,7 +33,13 @@ typedef struct program
     void (*program_end)(void);
 } program_t;
 
-TaskHandle_t menu_init(button_handle_t buttons[]);
+// Menu Task Peripheral Params
+typedef struct {
+    i2c_master_bus_handle_t master_bus;
+    button_handle_t button_handles[4];
+} menu_task_params_t;
+
+void menu_main(void *pvParameter);
 
 // Built for SSD1306 screens
 class Menu
@@ -42,7 +48,7 @@ public:
     /**
      * @brief Initialises a new MenuUI instance. Loads existing tasks from flash memory. Starts SSD1306 device.
      */
-    Menu();
+    Menu(i2c_master_bus_handle_t bus);
 
     /**
      * @brief Adds a program to the menu UI.
@@ -75,6 +81,7 @@ public:
     ~Menu();
 
 private:
+    i2c_master_dev_handle_t slave_handle;
     ssd1306_t display;
     uint8_t curr_programs;
     uint8_t program_count;

@@ -8,15 +8,21 @@
  * - Provide support for 128x64 or 128x32 OLED displays
  * - Provide support for both I2C and SPI controlled OLED displays
  *
+ * - Only supports I2C for now
+ * 
  * @author Gabriel Thien (https://github.com/losgab)
  * Inspiration from yanbe (https://github.com/yanbe/ssd1306-esp-idf-i2c/tree/master)
  */
 #pragma once
 
 // #include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "esp_check.h"
 #include "string.h"
+
+// Gabriel's Convenience Library
+#include "communication.h"
 
 #ifndef MAIN_SSD1366_H_
 #define MAIN_SSD1366_H_
@@ -70,7 +76,8 @@
 #define OLED_CMD_SET_VCOMH_DESELCT 0xDB   // follow with 0x30
 
 // Charge Pump (pg.62)
-#define OLED_CMD_SET_CHARGE_PUMP 0x8D // follow with 0x14
+#define OLED_CMD_SET_CHARGE_PUMP 0x8D // follow with Charge Pump On 0x14
+#define OLED_CMD_CHARGE_PUMP_ON 0x14
 
 typedef enum {
     LINE_0,
@@ -106,7 +113,8 @@ typedef enum {
 
 typedef struct ssd1306_display
 {
-    i2c_port_t port;
+    i2c_master_bus_handle_t bus;
+    i2c_master_dev_handle_t slave_handle;
 
     /**
      * @brief Clear entire display. Zeroes all memory.
@@ -154,12 +162,13 @@ typedef struct ssd1306_display
 /**
  * @brief Initializes SSD1306 display. Gabriel's library for the ESP-IDF through I2C.
  * 
- * @param port I2C port to use
+ * @param master_bus I2C bus handle
+ * @param slave_handle I2C device handle
  * @param ret_ssd1306_device Pointer to ssd1306_t struct
  * 
  * @return esp_err_t ESP_OK if successful, otherwise error code
 */
-esp_err_t gesp_ssd1306_init(i2c_port_t port, ssd1306_t *ret_ssd1306_device);
+esp_err_t gesp_ssd1306_init(i2c_master_bus_handle_t master_bus, i2c_master_dev_handle_t *slave_handle, ssd1306_t *ret_ssd1306_device);
 
 /**
  * @brief Initialize SSD1306 display
