@@ -34,8 +34,8 @@ typedef struct program
 } program_t;
 
 // Menu Task Peripheral Params
-typedef struct {
-    i2c_master_bus_handle_t master_bus;
+typedef struct menu_task_params {
+    i2c_master_bus_handle_t master_handle;
     button_handle_t button_handles[4];
 } menu_task_params_t;
 
@@ -81,11 +81,10 @@ public:
     ~Menu();
 
 private:
-    i2c_master_dev_handle_t slave_handle;
     ssd1306_t display;
-    uint8_t curr_programs;
+    uint8_t curr_program;
     uint8_t program_count;
-    line_num_t cursor_pos;
+    uint8_t cursor_pos;
     TaskHandle_t suspended_tasks[MAX_NUM_PROGRAMS]{};
     program_t programs[MAX_NUM_PROGRAMS]{};
 };

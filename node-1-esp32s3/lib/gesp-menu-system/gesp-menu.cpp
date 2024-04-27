@@ -9,18 +9,18 @@ extern "C"
 
     Menu::Menu(i2c_master_bus_handle_t bus)
     {
-        gesp_ssd1306_init(bus, &slave_handle, &display);
+        gesp_ssd1306_init(bus, &display);
 
-        curr_programs = 0, program_count = 2;
+        curr_program = 0; // Change these ater
+        program_count = 3;
 
-        // Prints all the programs to the screen.
+        cursor_pos = 2; // Initial Cursor position
+
         display.clear_display(&display);
         display.print_text_on_line(&display, "Gabe's System", LINE_0);
-        display.print_text_on_line(&display, " 1.Program 1", LINE_2);
+        display.print_text_on_line(&display, ">1.Program 1", LINE_2);
         display.print_text_on_line(&display, " 2.Program 2", LINE_3);
-
-        // Prints the cursor to the screen.
-        display.print_8x8basic(&display, '>', LINE_2, COL_0);
+        display.print_text_on_line(&display, " 3.Program 3", LINE_4);
     }
 
     esp_err_t Menu::add_program(const char *program_name)
@@ -50,17 +50,32 @@ extern "C"
 
     void Menu::cursor_down()
     {
+        display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 0);
+        cursor_pos = (cursor_pos == program_count + 1) ? 2 : cursor_pos + 1;
+        display.print_8x8basic(&display, '>', (line_num_t)cursor_pos, 0);
     }
 
     void Menu::cursor_up()
     {
+        display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 0);
+        cursor_pos = (cursor_pos == 2) ? program_count + 1 : cursor_pos - 1;
+        display.print_8x8basic(&display, '>', (line_num_t)cursor_pos, 0);
     }
 
     void Menu::program_select()
     {
-        // Start associated init function of task
-        // Get task handle of running program
-        // Add task handle to running programs earlier
+        if (curr_program == cursor_pos - 1)
+        {
+            display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 120);
+            curr_program = 0;
+            // Start associated init function of task
+        }
+        else
+        {
+            display.print_8x8basic(&display, '*', (line_num_t)cursor_pos, 120);
+            curr_program = cursor_pos - 1;
+            // End associated init function of task
+        }
     }
 
     void Menu::program_end()
