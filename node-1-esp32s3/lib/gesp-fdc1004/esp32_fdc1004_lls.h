@@ -6,12 +6,16 @@
 
     Inspired by Arduino driver written by Ashwin Whitchurch (Protocentral)
 */
+#pragma once
 
-#include <driver/i2c.h>
-#include "freertos/timers.h"
+// #include <driver/i2c.h>
+#include <driver/i2c_master.h>
 #include "esp_log.h"
+#include <freertos/FreeRTOS.h>
 
-#include "MovingAverage.h"
+// #include "MovingAverage.h"
+
+#include "communication.h"
 
 #define FDC_TAG "FDC1004"
 
@@ -41,13 +45,13 @@
 #define FDC1004_LOWER_BOUND (-1 * FDC1004_UPPER_BOUND)
 
 #define GAIN_CAL 1
-#define OFFSET_CAL -0.5
+#define OFFSET_CAL -2
 
-static const uint8_t config[] = {0x08, 0x09, 0x0A, 0x0B};
-static const uint8_t msb_addresses[] = {0x00, 0x02, 0x04, 0x06};
-static const uint8_t lsb_addresses[] = {0x01, 0x03, 0x05, 0x07};
-static const uint8_t offset_registers[] = {0x0D, 0x0E, 0x0F, 0x10};
-static const uint8_t gain_registers[] = {0x11, 0x12, 0x13, 0x14};
+const uint8_t config_address[4] = {0x08, 0x09, 0x0A, 0x0B};
+const uint8_t msb_addresses[4] = {0x00, 0x02, 0x04, 0x06};
+const uint8_t lsb_addresses[4] = {0x01, 0x03, 0x05, 0x07};
+const uint8_t offset_registers[4] = {0x0D, 0x0E, 0x0F, 0x10};
+const uint8_t gain_registers[4] = {0x11, 0x12, 0x13, 0x14};
 
 // Calibration Parameters
 #define REF_BASELINE 1.80 // can be replaced with environment later
@@ -68,10 +72,11 @@ static const uint8_t gain_registers[] = {0x11, 0x12, 0x13, 0x14};
 #define LNV_CHANNEL 4
 
 // Measurement Output
-typedef struct fdc1004_channel
+struct fdc1004_channel
 {
     // Shouldn't be changed
-    i2c_port_t port;
+    i2c_master_dev_handle_t slave_handle;
+
     uint8_t channel;
     uint8_t rate;
     uint8_t config_address;
@@ -81,7 +86,7 @@ typedef struct fdc1004_channel
     uint8_t gain_register;
 
     // Utility
-    moving_average_t ma;
+    // moving_average_t ma;
 
     // Continuously changed
     uint16_t raw_msb;
@@ -89,8 +94,8 @@ typedef struct fdc1004_channel
     int capdac;
     float raw_value;
     float value;
-} fdc1004_channel;
-typedef fdc1004_channel *fdc_channel_t;
+};
+typedef struct fdc1004_channel* fdc_channel_t;
 
 // Level Calculator Struct
 typedef struct level_calculator
@@ -107,7 +112,10 @@ typedef struct level_calculator
     float env_value;
 
     // Channel Objects
-    i2c_port_t port;
+    i2c_master_bus_handle_t master_bus;
+    i2c_master_dev_handle_t slave_handle;
+
+    // Channels
     fdc_channel_t ref_channel;
     fdc_channel_t lev_channel;
     fdc_channel_t env_channel;
@@ -117,11 +125,11 @@ typedef level_calculator *level_calc_t;
 /**
  * @brief Software reset the FDC1004. Reads the device ID for response from the FDC as well.
  *
- * @param port I2C port number
+ * @param slave_handle I2C handle to the FDC1004
  *
  * @return ESP_OK
  */
-esp_err_t fdc_reset(i2c_port_t port);
+esp_err_t fdc_reset(i2c_master_dev_handle_t slave_handle);
 
 /**
  * @brief Frees associated memory with pointer
@@ -131,17 +139,6 @@ esp_err_t fdc_reset(i2c_port_t port);
  * @return ESP_OK if all good.
  */
 esp_err_t del_channel(fdc_channel_t channel_obj);
-
-/**
- * @brief Uses I2C interface to read data at a particular address
- *
- * @param i2c_port_num I2C port number
- * @param reg_address Address of the register in the FDC1004 to be read
- * @param ret_data Pointer to store the data read from the specified register
- *
- * @return ESP_OK if good, else error code
- */
-esp_err_t read_register(i2c_port_t i2c_port_num, uint8_t reg_address, uint16_t *ret_data);
 
 /**
  * @brief Triggers and updates measurements of the channel struct
@@ -164,12 +161,11 @@ esp_err_t update_capdac(fdc_channel_t channel_obj);
 /**
  * @brief Initialises a level calculator struct for storing all computation data related to levels
  *
- * @param void
- * @param port I2C port number
- *
+ * @param master_bus I2C master bus handle
+ * 
  * @return Pointer to level_calc_t struct, NULL if failed
  */
-level_calc_t init_level_calculator(i2c_port_t port);
+level_calc_t init_fdc1004(i2c_master_bus_handle_t master_bus);
 
 /**
  * @brief Force calibrates the level calculator linear correction
@@ -188,3 +184,5 @@ esp_err_t calibrate(level_calc_t level);
  * @return unsigned integer
  */
 uint8_t calculate_level(level_calc_t level);
+
+void fdc1004_main(void *pvParameters);

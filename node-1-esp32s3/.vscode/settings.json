@@ -22,6 +22,12 @@
         "string": "c",
         "string_view": "c",
         "i2c_master.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "esp-ssd1306.h": "c",
+        "compare": "c",
+        "esp_log.h": "c",
+        "stdint.h": "c",
+        "cstddef": "c",
+        "limits": "c"
     }
 }

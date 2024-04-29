@@ -61,10 +61,10 @@ esp_err_t i2c_transmit_write_buffer(i2c_master_dev_handle_t slave_handle)
 	esp_err_t esp_rc;
 	
 	esp_rc = i2c_master_transmit(slave_handle, write_buffer, write_buffer_len, -1);
-	for (int i = 0; i < write_buffer_len; i++)
-	{
-		printf("Byte %d: %x\n", i, write_buffer[i]);
-	}
+	// for (int i = 0; i < write_buffer_len; i++)
+	// {
+	// 	printf("Byte %d: %x\n", i, write_buffer[i]);
+	// }
 
 	if (esp_rc != ESP_OK)
 	{

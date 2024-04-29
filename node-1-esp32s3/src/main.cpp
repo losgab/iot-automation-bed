@@ -39,6 +39,7 @@ led_strip_handle_t strip1;
 #define BUTTON_TAG "Button Tag"
 TaskHandle_t task_menu;
 i2c_master_bus_handle_t handle0;
+i2c_master_bus_handle_t handle1;
 menu_task_params_t params;
 
 void button_init()
@@ -82,36 +83,37 @@ void button_init()
 
 extern "C" void app_main()
 {
-    
+
     // Initialise LED Strips
     ESP_ERROR_CHECK(create_led_strip_device(STRIP_1_PIN, STRIP_1_NUM_LEDS, &strip1));
     // led_strip_set_colour(strip1, STRIP_1_NUM_LEDS, GREEN);
-    SYS_DELAY(100);
     led_strip_clear(strip1);
 
     button_init();
 
-    i2c_master_init(I2C_NUM_0, I2C_0_MASTER_SDA, I2C_0_MASTER_SCL, &params.master_handle);
+    i2c_master_init(I2C_NUM_0, I2C_0_MASTER_SDA, I2C_0_MASTER_SCL, &handle0);
+    i2c_master_init(I2C_NUM_1, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL, &handle1);
+    params.master_handle = handle0;
 
-    // i2c_master_init(I2C_NUM_1, I2C_1_MASTER_SDA, I2C_1_MASTER_SCL, handle1);
 
     // Add programs to menu to choose from
     // Add LED changing program
     // Add Servo Control program
     // Add FDC1004 Level Sensing Calculator program
 
-    // level_calc_t level_sensor = init_level_calculator(I2C_NUM_1);
-    // esp_err_t esp_rc;
+    // level_calc_t level_sensor = init_fdc1004(handle0);
+    esp_err_t esp_rc;
 
     xTaskCreate(menu_main, "menu_main", 4096, &params, 1, &task_menu);
+    xTaskCreate(fdc1004_main, "fdc1004_main", 4096, &handle1, 1, NULL);
 
     while (1)
     {
         SYS_DELAY(1000);
-    //     // esp_rc = update_measurements(level_sensor);
-    //     // if (esp_rc == ESP_OK)
-    //     // {
-    //     //     calculate_level(level_sensor);
-    //     // }
+        // esp_rc = update_measurements(level_sensor);
+        // if (esp_rc == ESP_OK)
+        // {
+        //     calculate_level(level_sensor);
+        // }
     }
 }
