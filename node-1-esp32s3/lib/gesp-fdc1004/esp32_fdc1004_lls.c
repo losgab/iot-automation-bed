@@ -10,7 +10,6 @@ esp_err_t read_register(i2c_master_dev_handle_t slave, uint8_t reg_address, uint
     i2c_clear_write_buffer();
     i2c_write_byte(pointer_address);
     error = i2c_transmit_write_buffer(slave);
-    // error = i2c_master_write_to_device(i2c_port_num, FDC_SLAVE_ADDRESS, &pointer_address, sizeof(pointer_address), pdMS_TO_TICKS(50));
     if (error != ESP_OK)
     {
         ESP_LOGE(FDC_TAG, "SPECIFY POINTER REGISTER ERROR | Code: 0x%.2X", error);
@@ -18,13 +17,14 @@ esp_err_t read_register(i2c_master_dev_handle_t slave, uint8_t reg_address, uint
     }
     // Sends read command for reading the current value in the register stored in the pointer register
     i2c_master_receive(slave, data, sizeof(data), 100);
-    // error = i2c_master_read_from_device(i2c_port_num, FDC_SLAVE_ADDRESS, data, sizeof(data), pdMS_TO_TICKS(100));
     if (error != ESP_OK)
     {
         ESP_LOGE(FDC_TAG, "READ REGISTER ERROR | Code: 0x%.2X", error);
         return error;
     }
 
+    // printf("MSB: %d\n", data[0]);
+    // printf("LSB: %d\n", data[1] >> 8);
     *ret_data = ((uint16_t)(data[0]) << 8) | (uint16_t)data[1];
     return ESP_OK;
 }
@@ -33,7 +33,6 @@ esp_err_t check_fdc1004(i2c_master_dev_handle_t slave_handle)
 {
     uint16_t data;
     read_register(slave_handle, FDC_DEVICE_ID_REG, &data);
-    // printf("%d\n", data);
     if (data != 0x1004)
     {
         printf("FDC1004 not detected! Data: 0x%.4X\n", data);
@@ -46,17 +45,13 @@ esp_err_t check_fdc1004(i2c_master_dev_handle_t slave_handle)
 esp_err_t fdc_reset(i2c_master_dev_handle_t slave_handle)
 {
     esp_err_t error;
-    // uint8_t reset[3];
-    // reset[0] = FDC_REGISTER;
-    // reset[1] = 0x80;
-    // reset[2] = 0;
 
     i2c_clear_write_buffer();
     i2c_write_byte(FDC_REGISTER);
     i2c_write_byte(0x80);
     i2c_write_byte(0);
+    
     error = i2c_transmit_write_buffer(slave_handle);
-    // error = i2c_master_write_to_device(port, FDC_SLAVE_ADDRESS, reset, sizeof(reset), pdMS_TO_TICKS(200));
     if (error != ESP_OK)
     {
         ESP_LOGE(FDC_TAG, "RESET ERROR | Code: 0x%.2X", error);
@@ -81,15 +76,11 @@ esp_err_t fdc_reset(i2c_master_dev_handle_t slave_handle)
 
 fdc_channel_t init_channel(i2c_master_dev_handle_t slave_handle, uint8_t channel, uint8_t rate)
 {
-    // if (!FDC1004_IS_CHANNEL(channel))
-    //     return NULL;
-
     if (!FDC1004_IS_RATE(rate))
         return NULL;
 
     fdc_channel_t new_channel = malloc(sizeof(struct fdc1004_channel));
 
-    // Checks for failed memory allocation
     if (new_channel == NULL)
     {
         printf("Memory allocation for new channel failed!\n");
@@ -148,20 +139,14 @@ esp_err_t validate_channel_obj(fdc_channel_t channel_obj)
 esp_err_t configure_channel(fdc_channel_t channel_obj)
 {
     esp_err_t error;
-    // uint8_t config[3];
     // uint8_t gain[3];
     // uint8_t offset[3];
 
     // Build 16 bit configuration
-    // printf("Channel: %d\n", channel_obj->channel);
     uint16_t configuration = (uint16_t)(channel_obj->channel) << 13; // CHA
-    configuration |= 0x1C00;                                         // CAPDAC
-    configuration |= ((uint16_t)0x04) << 10;                         // CHB disable / CAPDAC enable
-    configuration |= 20 << 5;                                        // CAPDAC value
-
-    // config[0] = channel_obj->config_address;
-    // config[1] = (uint8_t)(configuration >> 8);
-    // config[2] = (uint8_t)(configuration);
+    configuration |= 0x1000;                                         // CAPDAC
+    // configuration |= ((uint16_t)0x04) << 10;                         // CHB disable / CAPDAC enable
+    // configuration |= 20 << 5;                                        // CAPDAC value
 
     i2c_clear_write_buffer();
     i2c_write_byte(channel_obj->config_address);
@@ -177,28 +162,35 @@ esp_err_t configure_channel(fdc_channel_t channel_obj)
     uint8_t decimal_part;
     uint16_t encoded_gain;
     uint16_t encoded_decimal;
+    uint16_t encoded_offset;
 
     integer_part = (uint16_t)(GAIN_CAL);
     decimal_part = GAIN_CAL - integer_part;
     encoded_gain = integer_part << 14;
     encoded_decimal = (uint16_t)(decimal_part * (1 << 14));
     encoded_gain |= encoded_decimal;
-    // encoded_gain = 0x2000;
+    encoded_gain = 0x4000;
 
-    // i2c_clear_write_buffer();
-    // i2c_write_byte(channel_obj->gain_register);
-    // i2c_write_byte((uint8_t)(encoded_gain >> 8));
-    // i2c_write_byte((uint8_t)(encoded_gain));
-    // error = i2c_transmit_write_buffer(channel_obj->slave_handle);
-    // if (error != ESP_OK)
-    //     ESP_LOGE(FDC_TAG, "GAIN CONFIG ERROR | Code: 0x%.2X", error);
+    i2c_clear_write_buffer();
+    i2c_write_byte(channel_obj->gain_register);
+    i2c_write_byte((uint8_t)(encoded_gain >> 8));
+    i2c_write_byte((uint8_t)(encoded_gain));
+    error = i2c_transmit_write_buffer(channel_obj->slave_handle);
+    if (error != ESP_OK)
+        ESP_LOGE(FDC_TAG, "GAIN CONFIG ERROR | Code: 0x%.2X", error);
 
     // Configure offset
     integer_part = (uint16_t)(OFFSET_CAL);
     decimal_part = OFFSET_CAL - integer_part;
-    uint16_t encoded_offset = integer_part << 14;
-    encoded_decimal = (uint16_t)(decimal_part * (1 << 14));
-    encoded_decimal &= 0x3FFF;
+    encoded_decimal = (int16_t)(decimal_part * (1 << 14));
+    if (OFFSET_CAL >= 0)
+    {
+        encoded_offset = (uint16_t)(integer_part) << 10;
+    }
+    else
+    {
+        encoded_offset = ~(uint16_t)(encoded_decimal) << 10;
+    }
     encoded_offset |= encoded_decimal;
 
     i2c_clear_write_buffer();
@@ -208,33 +200,24 @@ esp_err_t configure_channel(fdc_channel_t channel_obj)
     error = i2c_transmit_write_buffer(channel_obj->slave_handle);
     if (error != ESP_OK)
         ESP_LOGE(FDC_TAG, "OFFSET CONFIG ERROR | Code: 0x%.2X", error);
+    
     return ESP_OK;
 }
 
 esp_err_t update_measurement(fdc_channel_t channel_obj)
 {
     uint16_t done_status;
-    // uint8_t trigger[3];
 
     // Build trigger for 16 bit register 0x0C
     uint16_t trigger_config = 0x0000;
-    trigger_config |= (uint16_t)(channel_obj->rate) << 10;         // Sample Rate
-    trigger_config |= (uint16_t)(1 << (7 - channel_obj->channel)); // Measurement channel
-
-    // printf("Trigger Config: %d\n", trigger_config);
-    // done_status = 0;
-    // read_register(channel_obj->port, FDC_REGISTER, &done_status);
-    // printf("Done Status Pre Trigger: %d\n", done_status);
-    // trigger[0] = FDC_REGISTER;
-    // trigger[1] = (uint8_t)(trigger_config >> 8);
-    // trigger[2] = (uint8_t)(trigger_config);
+    trigger_config |= 0x0040;         // Sample Rate
+    trigger_config |= 0x0080 >> channel_obj->channel; // Measurement channel
 
     i2c_clear_write_buffer();
     i2c_write_byte(FDC_REGISTER);
     i2c_write_byte((uint8_t)(trigger_config >> 8));
     i2c_write_byte((uint8_t)(trigger_config));
     i2c_transmit_write_buffer(channel_obj->slave_handle);
-    // ESP_ERROR_CHECK(i2c_master_write_to_device(channel_obj->port, FDC_SLAVE_ADDRESS, trigger, 3, pdMS_TO_TICKS(50)));
 
     // done_status = 0;
     // read_register(channel_obj->port, FDC_REGISTER, &done_status);
@@ -247,20 +230,21 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
     //     return error;
     // }
 
-    // Wait for measurement to complete
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     done_status = 0;
     read_register(channel_obj->slave_handle, FDC_REGISTER, &done_status);
-    // printf("Done Status Post Result: %d\n", done_status);
+    printf("Done Status Post Result: %d\n", done_status);
+    done_status &= (0x0008 >> channel_obj->channel);
     // Check measurement done status
-    if (done_status & (uint16_t)(1 << (7 - channel_obj->channel)))
+    if (done_status > 0)
+    // if ((done_status > 0) && (uint16_t)(1 << (channel_obj->channel + 4)))
     {
         // Measurement Done!
         uint16_t raw_msb = 0;
         uint16_t raw_lsb = 0;
-        read_register(channel_obj->slave_handle, channel_obj->msb_address, &raw_msb);
         read_register(channel_obj->slave_handle, channel_obj->lsb_address, &raw_lsb);
+        read_register(channel_obj->slave_handle, channel_obj->msb_address, &raw_msb);
         channel_obj->raw_msb = raw_msb;
         channel_obj->raw_lsb = raw_lsb;
 
@@ -271,7 +255,7 @@ esp_err_t update_measurement(fdc_channel_t channel_obj)
         printf("Raw value: %ld\n", raw_measurement_value);
         printf("Capacitance: %.2f pF\n", (float)(raw_measurement_value >> 16) / 8);
         printf("========================================\n");
-        channel_obj->raw_value = (float)((raw_measurement_value >> 16) / 1000);
+        channel_obj->raw_value = (float)((raw_measurement_value >> 16) / 8);
     }
 
     // Calculate capacitance
@@ -307,9 +291,6 @@ esp_err_t update_measurements(level_calc_t level_calc)
     update_measurement(level_calc->lev_channel);
     printf("ENV PAD: \n");
     update_measurement(level_calc->env_channel);
-    // printf("ENV PAD:\n");
-    // update_measurement(level_calc->env_channel);
-    // update_measurement(level_calc->lnv_channel);
 
     level_calc->ref_value = level_calc->ref_channel->value;
     level_calc->lev_value = level_calc->lev_channel->value;
@@ -332,15 +313,6 @@ esp_err_t update_capdac(fdc_channel_t channel_obj)
     }
     return ESP_OK;
 }
-
-// void timer_callback(TimerHandle_t xTimer)
-// {
-//     level_calc_t level_calc = (level_calc_t)pvTimerGetTimerID(xTimer);
-
-//     calibrate(level_calc);
-
-//     // printf("Interrupt! Calibration triggered!\n");
-// }
 
 level_calc_t init_fdc1004(i2c_master_bus_handle_t master_bus)
 {
@@ -372,9 +344,9 @@ level_calc_t init_fdc1004(i2c_master_bus_handle_t master_bus)
 
     new_calc->master_bus = master_bus;
     new_calc->slave_handle = slave_handle;
-    new_calc->ref_channel = init_channel(slave_handle, REF_CHANNEL - 1, FDC1004_100HZ);
-    new_calc->lev_channel = init_channel(slave_handle, LEV_CHANNEL - 1, FDC1004_100HZ);
-    new_calc->env_channel = init_channel(slave_handle, ENV_CHANNEL - 1, FDC1004_100HZ);
+    new_calc->ref_channel = init_channel(slave_handle, REF_CHANNEL - 1, FDC1004_400HZ);
+    new_calc->lev_channel = init_channel(slave_handle, LEV_CHANNEL - 1, FDC1004_400HZ);
+    new_calc->env_channel = init_channel(slave_handle, ENV_CHANNEL - 1, FDC1004_400HZ);
 
     configure_channel(new_calc->ref_channel);
     configure_channel(new_calc->lev_channel);

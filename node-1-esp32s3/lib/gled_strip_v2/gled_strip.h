@@ -7,9 +7,13 @@
 
 #include <led_strip.h>
 #include <driver/gpio.h>
+#include <freertos/FreeRTOS.h>
+#include <iot_button.h>
 
 #define MAX_COLOURS 6
 #define CHANNELS 3
+
+#define NUM_LEDS 2
 
 typedef enum colour // Colours
 {
@@ -42,3 +46,5 @@ void led_strip_set_colour(led_strip_handle_t strip, uint8_t num_leds, colour_t c
  * @return ESP_OK on success
 */
 esp_err_t create_led_strip_device(gpio_num_t pin, uint8_t num_leds, led_strip_handle_t *ret_strip);
+
+void led_strip_main(void *pvParameter);

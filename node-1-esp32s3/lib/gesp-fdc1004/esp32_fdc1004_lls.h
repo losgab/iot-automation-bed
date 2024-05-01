@@ -45,7 +45,7 @@
 #define FDC1004_LOWER_BOUND (-1 * FDC1004_UPPER_BOUND)
 
 #define GAIN_CAL 1
-#define OFFSET_CAL -2
+#define OFFSET_CAL -10
 
 const uint8_t config_address[4] = {0x08, 0x09, 0x0A, 0x0B};
 const uint8_t msb_addresses[4] = {0x00, 0x02, 0x04, 0x06};

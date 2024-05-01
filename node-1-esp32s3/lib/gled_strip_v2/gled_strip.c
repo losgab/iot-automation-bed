@@ -38,3 +38,39 @@ esp_err_t create_led_strip_device(gpio_num_t pin, uint8_t num_leds, led_strip_ha
     led_strip_clear(*ret_strip);
     return ESP_OK;
 }
+
+static void button1_cb(void *arg, void *data)
+{
+    led_strip_handle_t led_strip = (led_strip_handle_t)data;
+    led_strip_set_colour(led_strip, NUM_LEDS, RED);
+}
+
+static void button2_cb(void *arg, void *data)
+{
+    led_strip_handle_t led_strip = (led_strip_handle_t)data;
+    led_strip_set_colour(led_strip, NUM_LEDS, GREEN);
+}
+
+static void button3_cb(void *arg, void *data)
+{
+    led_strip_handle_t led_strip = (led_strip_handle_t)data;
+    led_strip_set_colour(led_strip, NUM_LEDS, AQUA);
+}
+
+static void register_led_buttons(button_handle_t buttons[])
+{
+    iot_button_register_cb(buttons[0], BUTTON_PRESS_DOWN, button1_cb, NULL);
+    iot_button_register_cb(buttons[1], BUTTON_PRESS_DOWN, button2_cb, NULL);
+    iot_button_register_cb(buttons[2], BUTTON_PRESS_DOWN, button3_cb, NULL);
+}
+
+void led_strip_main(void *pvParameter)
+{
+    button_handle_t *buttons = (button_handle_t *)pvParameter;
+    register_led_buttons(buttons);
+
+    while (1)
+    {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+}

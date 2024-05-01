@@ -23,7 +23,7 @@ extern "C"
         display.print_text_on_line(&display, " 3.Program 3", LINE_4);
     }
 
-    esp_err_t Menu::add_program(const char *program_name)
+    esp_err_t Menu::add_program(const char *program_name, void (*program_main)(void *))
     {
         size_t length = strlen(program_name);
         if (length + 1 > MAX_PROGRAM_NAME_LEN)
@@ -37,13 +37,12 @@ extern "C"
             return ESP_ERR_INVALID_ARG;
         }
 
-        program_t new_program;
-        new_program.program_id = program_count;
-        new_program.program_task = NULL;
-        strncpy(new_program.program_name, program_name, length);
-        programs[program_count++] = new_program;
-
-        // Add pointers to program task
+        programs[program_count].program_id = program_count;
+        programs[program_count].program_task = 0;
+        strncpy(programs[program_count].program_name, program_name, length);
+        // programs[program_count].program_name = program_name;
+        programs[program_count].program_main = program_main; // Program Main Function
+        program_count++;
 
         return ESP_OK;
     }
@@ -68,6 +67,8 @@ extern "C"
         {
             display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 120);
             curr_program = 0;
+            // Unregister buttons and start associated init function of task
+            unregister_menu_buttons();
             // Start associated init function of task
         }
         else
