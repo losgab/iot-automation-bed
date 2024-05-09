@@ -26,7 +26,7 @@ extern "C"
 
 #define MENU_TAG "Gabe's Menu"
 
-button_handle_t button_handles[4];
+// button_handle_t button_handles[4];
 
     // Programs
     typedef struct program
@@ -93,24 +93,6 @@ button_handle_t button_handles[4];
     };
 
     void menu_main(void *pvParameter);
-
-    esp_err_t register_menu_buttons(Menu &menu, button_handle_t buttons[])
-    {
-        iot_button_register_cb(buttons[0], BUTTON_PRESS_DOWN, button1_cb, &menu);
-        iot_button_register_cb(buttons[1], BUTTON_PRESS_DOWN, button2_cb, &menu);
-        iot_button_register_cb(buttons[2], BUTTON_PRESS_DOWN, button3_cb, &menu);
-        iot_button_register_cb(buttons[3], BUTTON_PRESS_DOWN, button4_cb, &menu);
-        return ESP_OK;
-    }
-
-    esp_err_t unregister_menu_buttons(button_handle_t buttons[])
-    {
-        iot_button_unregister_cb(buttons[0], BUTTON_PRESS_DOWN);
-        iot_button_unregister_cb(buttons[1], BUTTON_PRESS_DOWN);
-        iot_button_unregister_cb(buttons[2], BUTTON_PRESS_DOWN);
-        iot_button_unregister_cb(buttons[3], BUTTON_PRESS_DOWN);
-        return ESP_OK;
-    }
 
 #ifdef __cplusplus
 }

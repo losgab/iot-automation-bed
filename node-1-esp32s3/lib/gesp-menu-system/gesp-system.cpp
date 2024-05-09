@@ -5,7 +5,6 @@ extern "C"
 #endif
 
 #include "gesp-system.h"
-}
 
 static void menu_button1_cb(void *arg, void *data)
 {
@@ -54,11 +53,11 @@ void menu_main(void *pvParameter)
 
     Menu menu(master_bus);
 
-    button_handles[0] = params->button_handles[0];
-    button_handles[1] = params->button_handles[1];
-    button_handles[2] = params->button_handles[2];
-    button_handles[3] = params->button_handles[3];
-    register_menu_buttons(menu, button_handles);
+    // button_handles[0] = params->button_handles[0];
+    // button_handles[1] = params->button_handles[1];
+    // button_handles[2] = params->button_handles[2];
+    // button_handles[3] = params->button_handles[3];
+    register_menu_buttons(menu, params->button_handles);
 
     // Add programs to Menu here
     menu.add_program("LEDs", led_strip_main);

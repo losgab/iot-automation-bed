@@ -68,7 +68,7 @@ extern "C"
             display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 120);
             curr_program = 0;
             // Unregister buttons and start associated init function of task
-            unregister_menu_buttons();
+            // unregister_menu_buttons();
             // Start associated init function of task
         }
         else
