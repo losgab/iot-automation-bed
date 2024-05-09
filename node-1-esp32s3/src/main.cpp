@@ -102,10 +102,10 @@ extern "C" void app_main()
     // Add FDC1004 Level Sensing Calculator program
 
     // level_calc_t level_sensor = init_fdc1004(handle0);
-    esp_err_t esp_rc;
+    // esp_err_t esp_rc;
 
     xTaskCreate(menu_main, "menu_main", 4096, &params, 1, &task_menu);
-    xTaskCreate(fdc1004_main, "fdc1004_main", 4096, &handle1, 1, NULL);
+    // xTaskCreate(fdc1004_main, "fdc1004_main", 4096, &handle1, 1, NULL);
 
     while (1)
     {

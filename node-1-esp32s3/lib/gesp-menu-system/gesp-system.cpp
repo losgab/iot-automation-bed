@@ -1,4 +1,3 @@
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -51,12 +50,8 @@ void menu_main(void *pvParameter)
     menu_task_params_t *params = (menu_task_params_t *)pvParameter;
     i2c_master_bus_handle_t master_bus = params->master_handle;
 
-    Menu menu(master_bus);
+    Menu menu(master_bus, params->button_handles);
 
-    // button_handles[0] = params->button_handles[0];
-    // button_handles[1] = params->button_handles[1];
-    // button_handles[2] = params->button_handles[2];
-    // button_handles[3] = params->button_handles[3];
     register_menu_buttons(menu, params->button_handles);
 
     // Add programs to Menu here
@@ -65,8 +60,16 @@ void menu_main(void *pvParameter)
     // Add Stepper Control Program
     // Add FDC1004 program
 
-    while (1)
+    // Implement queue here
+    /*
+        Menu places message on queue for the system which button callbacks to be active
+        Button Context Handler in menu system
+    */
+   void (*curr_context_deregister_io)(button_handle_t buttons[]) = NULL;
+
+    while (1) // Button context switching
     {
+        // If queue is not empty, process the button context switch
         vTaskDelay(100);
     }
 }

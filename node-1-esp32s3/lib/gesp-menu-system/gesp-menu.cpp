@@ -7,9 +7,11 @@ extern "C"
 {
 #endif
 
-    Menu::Menu(i2c_master_bus_handle_t bus)
+    Menu::Menu(i2c_master_bus_handle_t bus, button_handle_t button_handles[])
     {
         gesp_ssd1306_init(bus, &display);
+
+        memcpy(buttons, button_handles, MAX_NUM_BUTTONS * sizeof(button_handle_t));
 
         curr_program = 0; // Change these ater
         program_count = 3;
@@ -67,6 +69,8 @@ extern "C"
         {
             display.print_8x8basic(&display, ' ', (line_num_t)cursor_pos, 120);
             curr_program = 0;
+            // Switch Menu IO context to program
+            deregister_menu_buttons(buttons);
             // Unregister buttons and start associated init function of task
             // unregister_menu_buttons();
             // Start associated init function of task
@@ -81,6 +85,46 @@ extern "C"
 
     void Menu::program_end()
     {
+    }
+
+    static void menu_button1_cb(void *arg, void *data)
+    {
+        Menu *menu = (Menu *)data;
+        menu->cursor_up();
+    }
+
+    static void menu_button2_cb(void *arg, void *data)
+    {
+        Menu *menu = (Menu *)data;
+        menu->cursor_down();
+    }
+
+    static void menu_button3_cb(void *arg, void *data)
+    {
+        Menu *menu = (Menu *)data;
+        menu->program_select();
+    }
+
+    static void menu_button4_cb(void *arg, void *data)
+    {
+    }
+
+    esp_err_t register_menu_buttons(Menu &menu, button_handle_t buttons[])
+    {
+        iot_button_register_cb(buttons[0], BUTTON_PRESS_DOWN, menu_button1_cb, &menu);
+        iot_button_register_cb(buttons[1], BUTTON_PRESS_DOWN, menu_button2_cb, &menu);
+        iot_button_register_cb(buttons[2], BUTTON_PRESS_DOWN, menu_button3_cb, &menu);
+        iot_button_register_cb(buttons[3], BUTTON_PRESS_DOWN, menu_button4_cb, &menu);
+        return ESP_OK;
+    }
+
+    esp_err_t deregister_menu_buttons(button_handle_t buttons[])
+    {
+        iot_button_unregister_cb(buttons[0], BUTTON_PRESS_DOWN);
+        iot_button_unregister_cb(buttons[1], BUTTON_PRESS_DOWN);
+        iot_button_unregister_cb(buttons[2], BUTTON_PRESS_DOWN);
+        iot_button_unregister_cb(buttons[3], BUTTON_PRESS_DOWN);
+        return ESP_OK;
     }
 
 #ifdef __cplusplus

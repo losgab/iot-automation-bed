@@ -23,10 +23,20 @@ extern "C"
 
 #define MAX_NUM_PROGRAMS 4
 #define MAX_PROGRAM_NAME_LEN 10
+#define MAX_NUM_BUTTONS 4
 
 #define MENU_TAG "Gabe's Menu"
 
 // button_handle_t button_handles[4];
+
+    // System Button Context Handler
+    typedef struct button_context
+    {
+        uint8_t curr_program;
+        // 0 for Main Menu, 1 -> MAX_NUM_PROGRAMS + 1 for programs
+        // Function pointer for registering IO buttons
+        // Function pointer for deregistering IO buttons
+    } button_context_t;
 
     // Programs
     typedef struct program
@@ -51,7 +61,7 @@ extern "C"
         /**
          * @brief Initialises a new MenuUI instance. Loads existing tasks from flash memory. Starts SSD1306 device.
          */
-        Menu(i2c_master_bus_handle_t bus);
+        Menu(i2c_master_bus_handle_t bus, button_handle_t buttons[]);
 
         /**
          * @brief Adds a program to the menu UI.
@@ -78,6 +88,10 @@ extern "C"
          */
         void program_end();
 
+        void register_menu_buttons();
+
+        void deregister_menu_buttons(button_handle_t buttons[]);
+
         /**
          * @brief Destroys MenuUI instance.
          */
@@ -85,6 +99,7 @@ extern "C"
 
     private:
         ssd1306_t display;
+        button_handle_t buttons[4];
         uint8_t curr_program;
         uint8_t program_count;
         uint8_t cursor_pos;
