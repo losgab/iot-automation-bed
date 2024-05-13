@@ -79,7 +79,7 @@
 #define OLED_CMD_SET_CHARGE_PUMP 0x8D // follow with Charge Pump On 0x14
 #define OLED_CMD_CHARGE_PUMP_ON 0x14
 
-typedef enum {
+enum {
     LINE_0,
     LINE_1,
     LINE_2,
@@ -89,9 +89,7 @@ typedef enum {
     LINE_6,
     LINE_7,
     MAX_LINES
-} line_num_t;
-
-typedef uint8_t col_num_t;
+};
 
 typedef struct ssd1306_display
 {
@@ -115,7 +113,7 @@ typedef struct ssd1306_display
      *
      * @return void
      */
-    void (*clear_line)(struct ssd1306_display *device, line_num_t line);
+    void (*clear_line)(struct ssd1306_display *device, uint8_t line);
 
     /**
      * @brief Writes text onto specified line on the display.
@@ -126,7 +124,7 @@ typedef struct ssd1306_display
      * 
      * @return void, needs to return invalid 
     */
-    esp_err_t (*print_text_on_line)(struct ssd1306_display *device, const char *text, line_num_t line);
+    esp_err_t (*print_text_on_line)(struct ssd1306_display *device, const char *text, uint8_t line);
 
     /**
      * @brief Writes text onto specified line on the display.
@@ -137,7 +135,7 @@ typedef struct ssd1306_display
      * 
      * @return void, needs to return invalid 
     */
-    esp_err_t (*print_8x8basic)(struct ssd1306_display *device, const char character, line_num_t line, col_num_t col);
+    esp_err_t (*print_8x8basic)(struct ssd1306_display *device, const char character, uint8_t line, uint8_t col);
 
 } ssd1306_t;
 

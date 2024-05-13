@@ -27,32 +27,23 @@ extern "C"
 
 #define MENU_TAG "Gabe's Menu"
 
-// button_handle_t button_handles[4];
-
-    // System Button Context Handler
-    typedef struct button_context
-    {
-        uint8_t curr_program;
-        // 0 for Main Menu, 1 -> MAX_NUM_PROGRAMS + 1 for programs
-        // Function pointer for registering IO buttons
-        // Function pointer for deregistering IO buttons
-    } button_context_t;
+    // button_handle_t button_handles[4];
 
     // Programs
     typedef struct program
     {
-        uint8_t program_id;
-        TaskHandle_t program_task;
+        TaskHandle_t handle;
         char program_name[MAX_PROGRAM_NAME_LEN];
         void (*program_main)(void *);
     } program_t;
 
     // Menu Task Peripheral Params
-    typedef struct menu_task_params
+    typedef struct menu_peripherals
     {
         i2c_master_bus_handle_t master_handle;
         button_handle_t button_handles[4];
-    } menu_task_params_t;
+        ssd1306_t display;
+    } menu_peripherals_t;
 
     // Built for SSD1306 screens
     class Menu
@@ -61,7 +52,7 @@ extern "C"
         /**
          * @brief Initialises a new MenuUI instance. Loads existing tasks from flash memory. Starts SSD1306 device.
          */
-        Menu(i2c_master_bus_handle_t bus, button_handle_t buttons[]);
+        Menu(ssd1306_t display1, button_handle_t buttons[]);
 
         /**
          * @brief Adds a program to the menu UI.
@@ -88,9 +79,8 @@ extern "C"
          */
         void program_end();
 
-        void register_menu_buttons();
 
-        void deregister_menu_buttons(button_handle_t buttons[]);
+        void deregister_buttons();
 
         /**
          * @brief Destroys MenuUI instance.
@@ -103,10 +93,11 @@ extern "C"
         uint8_t curr_program;
         uint8_t program_count;
         uint8_t cursor_pos;
-        TaskHandle_t suspended_tasks[MAX_NUM_PROGRAMS]{};
+        // TaskHandle_t suspended_tasks[MAX_NUM_PROGRAMS]{};
         program_t programs[MAX_NUM_PROGRAMS]{};
     };
 
+    void register_menu_buttons(Menu &menu, button_handle_t button_handles[]);
     void menu_main(void *pvParameter);
 
 #ifdef __cplusplus

@@ -41,36 +41,48 @@ esp_err_t create_led_strip_device(gpio_num_t pin, uint8_t num_leds, led_strip_ha
 
 static void button1_cb(void *arg, void *data)
 {
-    led_strip_handle_t led_strip = (led_strip_handle_t)data;
-    led_strip_set_colour(led_strip, NUM_LEDS, RED);
+    led_strip_handle_t strip = *(led_strip_handle_t *)data;
+    led_strip_set_colour(strip, NUM_LEDS, RED);
 }
 
 static void button2_cb(void *arg, void *data)
 {
-    led_strip_handle_t led_strip = (led_strip_handle_t)data;
-    led_strip_set_colour(led_strip, NUM_LEDS, GREEN);
+    led_strip_handle_t strip = *(led_strip_handle_t *)data;
+    led_strip_set_colour(strip, NUM_LEDS, GREEN);
 }
 
 static void button3_cb(void *arg, void *data)
 {
-    led_strip_handle_t led_strip = (led_strip_handle_t)data;
-    led_strip_set_colour(led_strip, NUM_LEDS, AQUA);
+    led_strip_handle_t strip = *(led_strip_handle_t *)data;
+    led_strip_set_colour(strip, NUM_LEDS, BLUE);
 }
 
-static void register_led_buttons(button_handle_t buttons[])
+static void button4_cb(void *arg, void *data)
 {
-    iot_button_register_cb(buttons[0], BUTTON_PRESS_DOWN, button1_cb, NULL);
-    iot_button_register_cb(buttons[1], BUTTON_PRESS_DOWN, button2_cb, NULL);
-    iot_button_register_cb(buttons[2], BUTTON_PRESS_DOWN, button3_cb, NULL);
+    led_strip_handle_t strip = *(led_strip_handle_t *)data;
+    led_strip_clear(strip);
+    printf("LED Strip demo stopped. Resources freed.\n");
+    led_strip_del(strip);
 }
 
 void led_strip_main(void *pvParameter)
 {
     button_handle_t *buttons = (button_handle_t *)pvParameter;
-    register_led_buttons(buttons);
+
+    // Initialise LED Strips
+    led_strip_handle_t strip1;
+    ESP_ERROR_CHECK(create_led_strip_device(GPIO_NUM_42, 2, &strip1));
+    led_strip_clear(strip1);
+
+    iot_button_register_cb(buttons[0], BUTTON_PRESS_DOWN, button1_cb, &strip1);
+    iot_button_register_cb(buttons[1], BUTTON_PRESS_DOWN, button2_cb, &strip1);
+    iot_button_register_cb(buttons[2], BUTTON_PRESS_DOWN, button3_cb, &strip1);
+    iot_button_register_cb(buttons[3], BUTTON_PRESS_DOWN, button4_cb, &strip1);
+
+    printf("LED Strip demo started\n");
 
     while (1)
     {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(10);
     }
 }

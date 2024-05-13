@@ -57,7 +57,7 @@ void ssd1306_clear_display(ssd1306_t *device)
 	}
 }
 
-void ssd1306_clear_line(ssd1306_t *device, line_num_t line)
+void ssd1306_clear_line(ssd1306_t *device, uint8_t line)
 {
 	i2c_write_byte(OLED_CONTROL_BYTE_CMD_STREAM);
 	i2c_write_byte(OLED_SET_PAGE_ADDRESS | line);
@@ -96,7 +96,7 @@ void ssd1306_clear_line(ssd1306_t *device, line_num_t line)
 	// }
 }
 
-esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, line_num_t line)
+esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, uint8_t line)
 {
 	size_t text_len = strlen(text);
 	ESP_RETURN_ON_FALSE(text_len <= MAX_CHARACTERS_PER_LINE, ESP_ERR_INVALID_ARG, SSD1306_TAG, "More characters than can fit on one line");
@@ -128,7 +128,7 @@ esp_err_t ssd1306_print_text_on_line(ssd1306_t *device, const char *text, line_n
 	return ESP_OK;
 }
 
-esp_err_t ssd1306_print_8x8basic(ssd1306_t *device, const char character, line_num_t line, col_num_t col)
+esp_err_t ssd1306_print_8x8basic(ssd1306_t *device, const char character, uint8_t line, uint8_t col)
 {
 	ESP_RETURN_ON_FALSE(line < MAX_LINES, ESP_ERR_INVALID_ARG, SSD1306_TAG, "Invalid line number");
 
